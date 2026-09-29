@@ -76,7 +76,7 @@ export function FootstepsPage() {
           </h1>
         </div>
         <p className="text-sm text-muted">
-          From our first meet in Sector 7, Rourkela, to our proposal at Khurda Park and movies at PJ Veena Hall.
+          From our first meet in Sector 7, Rourkela, to our proposal at Janaki Ballav Pattnaik Park and movies at PJ Veena Hall in Khordha.
         </p>
       </div>
 
@@ -89,8 +89,8 @@ export function FootstepsPage() {
         </div>
         <div className="rounded-2xl border border-border/70 bg-surface p-3.5 text-center shadow-xs">
           <p className="text-xl">💍</p>
-          <p className="mt-1 font-serif text-base font-medium text-text">The Park in Khurda</p>
-          <p className="text-[11px] text-muted">Proposal & 7.5h Record</p>
+          <p className="mt-1 font-serif text-base font-medium text-text">Janaki Ballav Park</p>
+          <p className="text-[11px] text-muted">Proposal & 7.5h Record · Khordha</p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-surface p-3.5 text-center shadow-xs">
           <p className="text-xl">🎬</p>

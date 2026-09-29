@@ -49,12 +49,12 @@ export const DEFAULT_MEMORIES: MemoryInput[] = [
     description: 'A beautiful evening strolling through Jaydev Vatika park. (5:00 PM – 8:00 PM)',
   },
   {
-    title: 'Proposal Day at Khordha Park 💍❤️',
+    title: 'Proposal Day at Janaki Ballav Pattnaik Park 💍❤️',
     category: 'Milestone',
     memory_date: '2026-07-29',
     memory_time: '16:00:00',
-    location_name: 'The Park in Khordha',
-    description: 'The magical moment at the park in Khordha where we said yes to forever. Proposal day! (4:00 PM – 9:15 PM)',
+    location_name: 'Janaki Ballav Pattnaik Park, Khordha',
+    description: 'The magical moment at Janaki Ballav Pattnaik Park in Khordha where we said yes to forever. Proposal day! (4:00 PM – 9:15 PM)',
   },
   {
     title: '1st Date as Couple: ISKCON & Botanical Garden 🌸',
@@ -65,12 +65,12 @@ export const DEFAULT_MEMORIES: MemoryInput[] = [
     description: '1st date as a couple! Visiting ISKCON Nayapalli and Botanical Garden Nayapalli. (4:15 PM – 9:45 PM)',
   },
   {
-    title: 'Back to Khordha Park 🌳',
+    title: 'Back to Janaki Ballav Pattnaik Park 🌳',
     category: 'Moment',
     memory_date: '2026-08-02',
     memory_time: '17:30:00',
-    location_name: 'The Park in Khordha',
-    description: 'Revisiting our special park in Khordha for a sweet evening conversation. (5:30 PM – 8:30 PM)',
+    location_name: 'Janaki Ballav Pattnaik Park, Khordha',
+    description: 'Revisiting Janaki Ballav Pattnaik Park in Khordha for a sweet evening conversation. (5:30 PM – 8:30 PM)',
   },
   {
     title: '3rd Movie (1st as Couple): Jan Neta 🎬',

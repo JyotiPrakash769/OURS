@@ -357,7 +357,7 @@ export function AccountModal({ isOpen, onClose }: Props) {
                   <span>🗺️</span> Our Footsteps Date Map
                 </h4>
                 <p className="mt-1 text-[11px] text-muted leading-relaxed">
-                  Interactive map plotting all special places in Bhubaneswar & Khordha (Jaydev Vatika, Khordha Park, Kala Bhoomi, Temples, etc.) with coordinates and memories.
+                  Interactive map plotting all special places across Rourkela, Khordha & Bhubaneswar (Sector 7, Janaki Ballav Pattnaik Park, PJ Veena Hall, Jaydev Vatika, Temples) with coordinates and memories.
                 </p>
               </div>
 
