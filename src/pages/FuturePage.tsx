@@ -12,15 +12,23 @@ import {
 } from '../lib/future'
 import { sendNotificationToPartner } from '../lib/notifications'
 
+const QUICK_IDEAS = [
+  { label: '🍕 Date Night', value: 'Date Night Dinner' },
+  { label: '✈️ Next Vacation', value: 'Our Next Vacation Trip' },
+  { label: '🎬 Movie & Cozy Evening', value: 'Movie & Blanket Night' },
+  { label: '🎂 Anniversary Celebration', value: 'Anniversary Celebration' },
+]
+
 export function FuturePage() {
   const { relationship, me } = useApp()
   const [items, setItems] = useState<FutureItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Form state
+  const [isEventMode, setIsEventMode] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newTargetAt, setNewTargetAt] = useState('')
-  const [showDatePicker, setShowDatePicker] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -70,7 +78,7 @@ export function FuturePage() {
     setSubmitting(true)
     setError(null)
     try {
-      const targetIso = newTargetAt ? new Date(newTargetAt).toISOString() : null
+      const targetIso = isEventMode && newTargetAt ? new Date(newTargetAt).toISOString() : null
       const created = await createFutureItem(relationship.id, newTitle, targetIso)
       setItems((prev) => [created, ...prev])
 
@@ -95,7 +103,6 @@ export function FuturePage() {
 
       setNewTitle('')
       setNewTargetAt('')
-      setShowDatePicker(false)
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
@@ -179,18 +186,67 @@ export function FuturePage() {
           Our Future
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Trips we will take, dreams we will chase, and events we count down to.
+          Bucket list dreams to chase & upcoming moments to count down together.
         </p>
       </header>
 
+      {/* Helpful, Sweet Explanatory Card */}
+      <div className="mb-6 flex items-start gap-3 rounded-2xl border border-accent/25 bg-accent-soft/20 p-4 text-xs shadow-xs">
+        <span className="text-2xl shrink-0 mt-0.5">⏳</span>
+        <div className="leading-relaxed">
+          <p className="font-semibold text-accent text-sm">
+            Live Flip Countdowns!
+          </p>
+          <p className="text-muted mt-1">
+            Pick <strong>"Planned Event (Countdown)"</strong> below to set an exact date & time for a date night, trip, or milestone. A live clock will tick down every second until the moment arrives!
+          </p>
+        </div>
+      </div>
+
       {/* Add New Dream / Event Form */}
-      <form onSubmit={handleAdd} className="rounded-2xl border border-border/80 bg-surface p-4 shadow-sm">
+      <form onSubmit={handleAdd} className="rounded-2xl border border-border/80 bg-surface p-4 shadow-sm sm:p-5">
+        {/* Clear Selector: Someday Dream vs Planned Event */}
+        <div className="flex rounded-xl bg-bg p-1 border border-border/70 mb-4">
+          <button
+            type="button"
+            onClick={() => setIsEventMode(false)}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 ${
+              !isEventMode
+                ? 'bg-surface text-accent shadow-xs'
+                : 'text-muted hover:text-text'
+            }`}
+          >
+            <span>✨</span>
+            <span>Someday Dream</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsEventMode(true)}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 ${
+              isEventMode
+                ? 'bg-surface text-accent shadow-xs'
+                : 'text-muted hover:text-text'
+            }`}
+          >
+            <span>⏳</span>
+            <span>Planned Event</span>
+            <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+              Countdown
+            </span>
+          </button>
+        </div>
+
+        {/* Input & Add Button */}
         <div className="flex gap-2">
           <input
             type="text"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Add a new dream, trip, or event..."
+            placeholder={
+              isEventMode
+                ? 'What are we looking forward to? (e.g. Flight to Rome)'
+                : 'What should we do someday? (e.g. Learn pottery together)'
+            }
             maxLength={200}
             className="flex-1 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-text placeholder:text-muted/60 focus:border-accent focus:outline-none"
           />
@@ -199,47 +255,60 @@ export function FuturePage() {
             disabled={submitting || !newTitle.trim()}
             className="rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? 'Adding...' : 'Add'}
+            {submitting ? 'Saving...' : 'Add'}
           </button>
         </div>
 
-        {/* Date & Time Countdown Option Toggle */}
-        <div className="mt-3 border-t border-border/50 pt-3 text-xs">
-          {!showDatePicker ? (
-            <button
-              type="button"
-              onClick={() => setShowDatePicker(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-bg/50 px-3 py-1.5 font-medium text-text hover:border-accent hover:text-accent transition"
-            >
-              <span>⏳</span>
-              <span>Add date & time for live countdown</span>
-            </button>
-          ) : (
-            <div className="space-y-2 rounded-xl bg-bg/60 p-3 border border-border/60">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-text">⏳ Live Countdown Target:</span>
+        {/* Date & Time Picker Section (Highlighted when Planned Event is chosen) */}
+        {isEventMode && (
+          <div className="mt-3.5 rounded-xl border border-accent/30 bg-accent-soft/10 p-3.5 space-y-2 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <label htmlFor="event-target-input" className="text-xs font-medium text-text flex items-center gap-1.5">
+                <span>🗓️</span>
+                <span>Select Target Date & Time:</span>
+              </label>
+              {newTargetAt && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setNewTargetAt('')
-                    setShowDatePicker(false)
-                  }}
-                  className="text-muted hover:text-red-500"
+                  onClick={() => setNewTargetAt('')}
+                  className="text-[11px] text-muted hover:text-red-500"
                 >
-                  ✕ Remove date
+                  Clear date
                 </button>
-              </div>
-              <input
-                type="datetime-local"
-                value={newTargetAt}
-                onChange={(e) => setNewTargetAt(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text focus:border-accent focus:outline-none"
-              />
-              <p className="text-[11px] text-muted">
-                Pick a future date & time (e.g. a date night, vacation, or concert). The card will show a live countdown ticking down every second!
-              </p>
+              )}
             </div>
-          )}
+
+            <input
+              id="event-target-input"
+              type="datetime-local"
+              value={newTargetAt}
+              onChange={(e) => setNewTargetAt(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text focus:border-accent focus:outline-none"
+            />
+            <p className="text-[11px] text-muted">
+              ✨ A live flip clock counting down days, hours, and seconds will appear on your card!
+            </p>
+          </div>
+        )}
+
+        {/* Cute Quick Idea Chips */}
+        <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+          <span className="text-[11px]">Quick ideas:</span>
+          {QUICK_IDEAS.map((idea) => (
+            <button
+              key={idea.label}
+              type="button"
+              onClick={() => {
+                setNewTitle(idea.value)
+                if (idea.value.includes('Trip') || idea.value.includes('Celebration')) {
+                  setIsEventMode(true)
+                }
+              }}
+              className="rounded-full border border-border/80 bg-bg px-2.5 py-0.5 text-[11px] transition hover:border-accent hover:text-accent"
+            >
+              {idea.label}
+            </button>
+          ))}
         </div>
       </form>
 
