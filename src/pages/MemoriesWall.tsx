@@ -4,7 +4,7 @@ import { EmptyState } from '../components/EmptyState'
 import { MemoryViewerModal } from '../components/MemoryViewerModal'
 import { PolaroidCard } from '../components/PolaroidCard'
 import { useApp } from '../lib/appContext'
-import { loadMemories, type Memory } from '../lib/memories'
+import { deleteMemory, loadMemories, type Memory } from '../lib/memories'
 import { loadMediaForMemories, type MemoryMedia } from '../lib/storage'
 
 export function MemoriesWall() {
@@ -52,6 +52,16 @@ export function MemoriesWall() {
       setLastRandomId(picked.id)
       setSelectedMemory(picked)
     })
+  }
+
+  const handleDeleteMemory = async (id: string) => {
+    try {
+      await deleteMemory(id)
+      setMemories((prev) => prev.filter((m) => m.id !== id))
+      setSelectedMemory(null)
+    } catch {
+      alert('Could not delete memory.')
+    }
   }
 
   return (
@@ -122,6 +132,7 @@ export function MemoriesWall() {
           media={mediaMap[selectedMemory.id]}
           onClose={() => setSelectedMemory(null)}
           onNextRandom={memories.length > 1 ? handleTakeMeSomewhere : undefined}
+          onDelete={handleDeleteMemory}
         />
       )}
     </div>

@@ -9,6 +9,7 @@ type Props = {
   memory: Memory
   media?: MemoryMedia[]
   onEdit: (memory: Memory) => void
+  onDelete?: (id: string) => void
 }
 
 function formatMemoryTime(timeStr: string | null): string | null {
@@ -23,7 +24,7 @@ function formatMemoryTime(timeStr: string | null): string | null {
   return `${displayH}:${displayM} ${period}`
 }
 
-export function TimelineCard({ memory, media = [], onEdit }: Props) {
+export function TimelineCard({ memory, media = [], onEdit, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false)
   const categoryMeta = MEMORY_CATEGORIES.find((c) => c.value === memory.category) ?? {
     value: memory.category,
@@ -39,7 +40,7 @@ export function TimelineCard({ memory, media = [], onEdit }: Props) {
 
   return (
     <article className="group relative rounded-2xl border border-border/80 bg-surface p-5 shadow-xs transition hover:border-accent/40 hover:shadow-md">
-      {/* Top row: Category tag + Date + Edit button */}
+      {/* Top row: Category tag + Date + Actions (Edit & Delete) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-bg px-2.5 py-0.5 text-xs font-medium text-muted">
@@ -49,14 +50,32 @@ export function TimelineCard({ memory, media = [], onEdit }: Props) {
           {formattedTime && <span className="text-xs text-muted/80">{formattedTime}</span>}
         </div>
 
-        <button
-          type="button"
-          onClick={() => onEdit(memory)}
-          aria-label={`Edit ${memory.title}`}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted/60 opacity-0 transition group-hover:opacity-100 hover:bg-bg hover:text-text focus:opacity-100"
-        >
-          ✎
-        </button>
+        <div className="flex items-center gap-1 opacity-70 transition sm:opacity-0 sm:group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => onEdit(memory)}
+            aria-label={`Edit ${memory.title}`}
+            title="Edit memory"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-bg hover:text-text"
+          >
+            ✎
+          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Delete "${memory.title}"? This cannot be undone.`)) {
+                  onDelete(memory.id)
+                }
+              }}
+              aria-label={`Delete ${memory.title}`}
+              title="Delete memory"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-bg hover:text-red-500"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Title */}

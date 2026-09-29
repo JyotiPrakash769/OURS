@@ -9,9 +9,10 @@ type Props = {
   media?: MemoryMedia[]
   onClose: () => void
   onNextRandom?: () => void
+  onDelete?: (id: string) => void
 }
 
-export function MemoryViewerModal({ memory, media = [], onClose, onNextRandom }: Props) {
+export function MemoryViewerModal({ memory, media = [], onClose, onNextRandom, onDelete }: Props) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -56,6 +57,21 @@ export function MemoryViewerModal({ memory, media = [], onClose, onNextRandom }:
               >
                 <span>✨</span>
                 <span className="hidden sm:inline">Another memory</span>
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Delete "${memory.title}"? This cannot be undone.`)) {
+                    onDelete(memory.id)
+                    onClose()
+                  }
+                }}
+                title="Delete this memory"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-bg hover:text-red-500"
+              >
+                🗑️
               </button>
             )}
             <button

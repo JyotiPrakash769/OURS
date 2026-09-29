@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { EmptyState } from '../components/EmptyState'
+import { FutureItemCard } from '../components/FutureItemCard'
 import { useApp } from '../lib/appContext'
-import { formatDateOnly } from '../lib/dates/zone'
 import {
   createFutureItem,
   deleteFutureItem,
@@ -19,9 +19,9 @@ export function FuturePage() {
   const [error, setError] = useState<string | null>(null)
 
   const [newTitle, setNewTitle] = useState('')
+  const [newTargetAt, setNewTargetAt] = useState('')
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingText, setEditingText] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -70,7 +70,8 @@ export function FuturePage() {
     setSubmitting(true)
     setError(null)
     try {
-      const created = await createFutureItem(relationship.id, newTitle)
+      const targetIso = newTargetAt ? new Date(newTargetAt).toISOString() : null
+      const created = await createFutureItem(relationship.id, newTitle, targetIso)
       setItems((prev) => [created, ...prev])
       sendNotificationToPartner({
         relationshipId: relationship.id,
@@ -79,6 +80,8 @@ export function FuturePage() {
         url: '/app/future',
       })
       setNewTitle('')
+      setNewTargetAt('')
+      setShowDatePicker(false)
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
@@ -124,68 +127,93 @@ export function FuturePage() {
     }
   }
 
-  const handleSaveEdit = async (id: string) => {
-    if (!editingText.trim()) {
-      setEditingId(null)
-      return
-    }
+  const handleUpdate = async (id: string, title: string, targetAt?: string | null) => {
     try {
-      const updated = await updateFutureItem(id, editingText)
+      const updated = await updateFutureItem(id, title, targetAt)
       setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
-    } finally {
-      setEditingId(null)
+    } catch {
+      alert('Could not update item.')
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this dream from your list?')) return
     try {
       await deleteFutureItem(id)
       setItems((prev) => prev.filter((i) => i.id !== id))
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
-          ? (err as { message: string }).message
-          : err instanceof Error
-            ? err.message
-            : 'Could not delete item.'
-      setError(msg)
+    } catch {
+      alert('Could not delete item.')
     }
   }
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:px-6">
       {/* Header */}
-      <div>
-        <h1 className="font-serif text-3xl font-normal tracking-tight text-text sm:text-4xl">
+      <header className="mb-6 text-center">
+        <h1 className="font-serif text-3xl font-medium tracking-tight text-text sm:text-4xl">
           Our Future
         </h1>
-        <p className="mt-1 text-sm text-muted">
-          Dreams, adventures, and quiet moments to share someday.
+        <p className="mt-2 text-sm text-muted">
+          Trips we will take, dreams we will chase, and events we count down to.
         </p>
-      </div>
+      </header>
 
-      {/* Add Item Bar */}
-      <form onSubmit={handleAdd} className="mt-6 flex gap-2">
-        <input
-          type="text"
-          maxLength={200}
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="What should we do someday? e.g. See the Northern Lights..."
-          className="h-11 flex-1 rounded-xl border border-border bg-surface px-4 text-sm text-text placeholder:text-muted/60 shadow-2xs focus:border-accent focus:outline-hidden"
-        />
-        <button
-          type="submit"
-          disabled={submitting || !newTitle.trim()}
-          className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-5 text-sm font-medium text-surface shadow-xs transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
-        >
-          {submitting ? 'Adding…' : '＋ Add'}
-        </button>
+      {/* Add New Dream / Event Form */}
+      <form onSubmit={handleAdd} className="rounded-2xl border border-border/80 bg-surface p-4 shadow-sm">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="Add a new dream, trip, or event..."
+            maxLength={200}
+            className="flex-1 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-text placeholder:text-muted/60 focus:border-accent focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={submitting || !newTitle.trim()}
+            className="rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          >
+            {submitting ? 'Adding...' : 'Add'}
+          </button>
+        </div>
+
+        {/* Date & Time Countdown Option Toggle */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
+          {!showDatePicker ? (
+            <button
+              type="button"
+              onClick={() => setShowDatePicker(true)}
+              className="inline-flex items-center gap-1.5 text-muted hover:text-accent transition"
+            >
+              <span>🗓️</span>
+              <span>Set date & time for live countdown</span>
+            </button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2 w-full">
+              <span className="text-muted">Target moment:</span>
+              <input
+                type="datetime-local"
+                value={newTargetAt}
+                onChange={(e) => setNewTargetAt(e.target.value)}
+                className="rounded-lg border border-border bg-bg px-2.5 py-1 text-xs text-text focus:border-accent focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setNewTargetAt('')
+                  setShowDatePicker(false)
+                }}
+                className="text-xs text-muted hover:text-red-500 ml-auto"
+              >
+                Clear date
+              </button>
+            </div>
+          )}
+        </div>
       </form>
 
       {error && (
-        <div role="alert" className="mt-4 rounded-xl border border-accent/30 bg-accent-soft/20 p-3 text-sm text-accent">
+        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-center text-xs text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -202,70 +230,24 @@ export function FuturePage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Active Dreams */}
+            {/* Active Dreams & Events */}
             {activeItems.length > 0 && (
-              <ul className="space-y-2.5">
-                {activeItems.map((item) => {
-                  const isEditing = editingId === item.id
-                  return (
-                    <li
-                      key={item.id}
-                      className="group flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface px-4 py-3.5 shadow-2xs transition hover:border-accent/40"
-                    >
-                      <div className="flex flex-1 items-center gap-3">
-                        {/* Custom romantic check button */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggle(item)}
-                          aria-label={`Mark "${item.title}" complete`}
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/90 bg-bg text-transparent transition hover:border-accent hover:text-accent/60"
-                        >
-                          <span className="text-xs">✓</span>
-                        </button>
-
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            autoFocus
-                            value={editingText}
-                            onChange={(e) => setEditingText(e.target.value)}
-                            onBlur={() => handleSaveEdit(item.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveEdit(item.id)
-                              if (e.key === 'Escape') setEditingId(null)
-                            }}
-                            className="h-8 flex-1 rounded-md border border-accent bg-bg px-2 text-sm text-text focus:outline-hidden"
-                          />
-                        ) : (
-                          <span
-                            onClick={() => {
-                              setEditingId(item.id)
-                              setEditingText(item.title)
-                            }}
-                            className="cursor-pointer text-sm leading-relaxed text-text select-none"
-                          >
-                            {item.title}
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item.id)}
-                        aria-label={`Delete "${item.title}"`}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted/40 opacity-0 transition group-hover:opacity-100 hover:bg-bg hover:text-red-600 focus:opacity-100"
-                      >
-                        ✕
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
+              <div className="space-y-3">
+                {activeItems.map((item) => (
+                  <FutureItemCard
+                    key={item.id}
+                    item={item}
+                    onToggle={handleToggle}
+                    onDelete={handleDelete}
+                    onUpdate={handleUpdate}
+                  />
+                ))}
+              </div>
             )}
 
             {/* Completed Section */}
             {completedItems.length > 0 && (
-              <section aria-labelledby="completed-heading" className="pt-2">
+              <section aria-labelledby="completed-heading" className="pt-4 border-t border-border/60">
                 <h2
                   id="completed-heading"
                   className="mb-3 font-serif text-base font-normal tracking-wide text-muted"
@@ -273,51 +255,17 @@ export function FuturePage() {
                   Completed Together ({completedItems.length})
                 </h2>
 
-                <ul className="space-y-2">
-                  {completedItems.map((item) => {
-                    const completedDateText = item.completed_at
-                      ? formatDateOnly(new Date(item.completed_at))
-                      : null
-
-                    return (
-                      <li
-                        key={item.id}
-                        className="group flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-surface/50 px-4 py-3 transition hover:bg-surface"
-                      >
-                        <div className="flex flex-1 items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handleToggle(item)}
-                            aria-label={`Unmark "${item.title}"`}
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent bg-accent text-surface transition hover:opacity-80"
-                          >
-                            <span className="text-xs">✓</span>
-                          </button>
-
-                          <div className="flex flex-col">
-                            <span className="text-sm text-muted line-through decoration-border">
-                              {item.title}
-                            </span>
-                            {completedDateText && (
-                              <span className="text-[11px] text-muted/70">
-                                Completed {completedDateText}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item.id)}
-                          aria-label={`Delete "${item.title}"`}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted/40 opacity-0 transition group-hover:opacity-100 hover:bg-bg hover:text-red-600 focus:opacity-100"
-                        >
-                          ✕
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
+                <div className="space-y-2.5">
+                  {completedItems.map((item) => (
+                    <FutureItemCard
+                      key={item.id}
+                      item={item}
+                      onToggle={handleToggle}
+                      onDelete={handleDelete}
+                      onUpdate={handleUpdate}
+                    />
+                  ))}
+                </div>
               </section>
             )}
           </div>

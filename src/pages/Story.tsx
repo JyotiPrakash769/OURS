@@ -271,6 +271,7 @@ export function Story() {
                             setEditingMemory(m)
                             setModalOpen(true)
                           }}
+                          onDelete={handleDelete}
                         />
                       </div>
                     ))}

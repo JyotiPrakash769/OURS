@@ -7,6 +7,7 @@ export type FutureItem = {
   title: string
   completed: boolean
   completed_at: string | null
+  target_at: string | null
   created_at: string
   updated_at: string
 }
@@ -23,7 +24,11 @@ export async function loadFutureItems(relationshipId: string): Promise<FutureIte
   return (data ?? []) as FutureItem[]
 }
 
-export async function createFutureItem(relationshipId: string, title: string): Promise<FutureItem> {
+export async function createFutureItem(
+  relationshipId: string,
+  title: string,
+  targetAt?: string | null,
+): Promise<FutureItem> {
   const trimmed = title.trim()
   if (!trimmed) throw new Error('Title cannot be empty')
 
@@ -32,6 +37,7 @@ export async function createFutureItem(relationshipId: string, title: string): P
     .insert({
       relationship_id: relationshipId,
       title: trimmed,
+      target_at: targetAt || null,
     })
     .select()
     .single()
@@ -55,13 +61,22 @@ export async function toggleFutureItem(id: string, completed: boolean): Promise<
   return data as FutureItem
 }
 
-export async function updateFutureItem(id: string, title: string): Promise<FutureItem> {
+export async function updateFutureItem(
+  id: string,
+  title: string,
+  targetAt?: string | null,
+): Promise<FutureItem> {
   const trimmed = title.trim()
   if (!trimmed) throw new Error('Title cannot be empty')
 
+  const updates: Record<string, unknown> = { title: trimmed }
+  if (targetAt !== undefined) {
+    updates.target_at = targetAt || null
+  }
+
   const { data, error } = await db()
     .from('future_items')
-    .update({ title: trimmed })
+    .update(updates)
     .eq('id', id)
     .select()
     .single()

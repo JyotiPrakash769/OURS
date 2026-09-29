@@ -321,6 +321,24 @@ describe('future items authorization', () => {
     const check = await as(alice, 'select * from public.future_items where id = $1', [itemId])
     expect(check.rows).toHaveLength(0)
   })
+
+  it('allows member to set and update target_at for countdown events', async () => {
+    const res = await as(
+      alice,
+      `insert into public.future_items (relationship_id, title, target_at)
+       values ($1, 'Trip to Iceland', '2027-01-01T12:00:00Z')
+       returning id, target_at`,
+      [relId],
+    )
+    expect(res.rows).toHaveLength(1)
+    expect(res.rows[0].target_at).toBeTruthy()
+    const id = res.rows[0].id as string
+
+    // Partner can update target_at
+    await as(bob, `update public.future_items set target_at = '2027-02-01T12:00:00Z' where id = $1`, [id])
+    const updated = await as(alice, 'select target_at from public.future_items where id = $1', [id])
+    expect(new Date(updated.rows[0].target_at as string).getUTCMonth()).toBe(1) // February
+  })
 })
 
 describe('letters authorization', () => {
