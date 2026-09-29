@@ -159,16 +159,17 @@ export const FOOTSTEP_SPOTS: FootstepSpot[] = [
   {
     id: 'ganesh-puja-mela',
     name: 'Ganesh Puja Mela',
-    area: 'Bhubaneswar',
-    region: 'Bhubaneswar',
+    area: 'Khudupur Field, Near IIT Road',
+    region: 'Khurda',
     dateStr: '14 September 2026',
     category: 'Moment',
     badge: '🎪 Sweet Reunion & Mela',
     icon: '🎪',
     description:
-      'A joyful festive reunion together browsing colorful stalls, eating sweets, and watching a movie!',
-    latitude: 20.275,
-    longitude: 85.825,
-    googleMapsUrl: 'https://maps.google.com/?q=Bhubaneswar',
+      'A joyful festive reunion together browsing colorful stalls, eating sweets, and watching a movie at Khudupur Field near IIT Road!',
+    latitude: 20.155,
+    longitude: 85.695,
+    googleMapsUrl: 'https://maps.google.com/?q=Khudupur+Field+near+IIT+Road+Odisha',
+    highlight: 'Sweet festive reunion celebrating Ganesh Puja mela together 🎪❤️',
   },
 ]

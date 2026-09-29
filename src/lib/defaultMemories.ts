@@ -173,8 +173,8 @@ export const DEFAULT_MEMORIES: MemoryInput[] = [
     category: 'Trip',
     memory_date: '2026-09-14',
     memory_time: '15:30:00',
-    location_name: 'Ganesh Puja Mela',
-    description: 'A sweet reunion ❤️, a movie date, and festive Ganesh Puja mela together.',
+    location_name: 'Khudupur Field, Near IIT Road',
+    description: 'A sweet reunion ❤️, a movie date, and festive Ganesh Puja mela together at Khudupur Field near IIT Road.',
   },
   {
     title: '2nd Month Anniversary ❤️ Today!',

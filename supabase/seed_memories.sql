@@ -116,7 +116,7 @@ begin
 
     -- 22. 14th September: Sweet reunion, movie & Ganesh Puja Mela
     insert into public.memories (relationship_id, creator_id, title, description, memory_date, memory_time, location_name, category)
-    values (r.id, r.user_a_id, 'Sweet Reunion, Movie & Ganesh Puja Mela 🎪❤️', 'A heartwarming reunion! Watched a movie together and visited the vibrant, festive Ganesh Puja Mela.', '2026-09-14', '15:30:00', 'Ganesh Puja Mela & Cinema', 'Trip');
+    values (r.id, r.user_a_id, 'Sweet Reunion, Movie & Ganesh Puja Mela 🎪❤️', 'A heartwarming reunion! Watched a movie together and visited the vibrant, festive Ganesh Puja Mela at Khudupur Field near IIT Road.', '2026-09-14', '15:30:00', 'Khudupur Field, Near IIT Road', 'Trip');
 
     -- 23. 29th September: 2nd Month Anniversary
     insert into public.memories (relationship_id, creator_id, title, description, memory_date, memory_time, location_name, category)
