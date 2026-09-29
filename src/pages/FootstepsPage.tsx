@@ -42,6 +42,58 @@ export function FootstepsPage() {
   const [region, setRegion] = useState<Region>('All')
   const [categoryFilter, setCategoryFilter] = useState<string>('All')
 
+  // Zoom & Pan state
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+
+  const handleZoomIn = () => setZoom((z) => Math.min(3.5, +(z + 0.3).toFixed(1)))
+  const handleZoomOut = () => setZoom((z) => Math.max(0.6, +(z - 0.3).toFixed(1)))
+  const handleResetZoom = () => {
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }
+
+  const handleRegionChange = (newRegion: Region) => {
+    setRegion(newRegion)
+    handleResetZoom()
+  }
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault()
+    const delta = e.deltaY < 0 ? 0.15 : -0.15
+    setZoom((z) => Math.max(0.6, Math.min(3.5, +(z + delta).toFixed(2))))
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return
+    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
+  }
+
+  const handleMouseUp = () => setIsDragging(false)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true)
+      setDragStart({ x: e.touches[0].clientX - pan.x, y: e.touches[0].clientY - pan.y })
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && e.touches.length === 1) {
+      setPan({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y })
+    }
+  }
+
+  const handleTouchEnd = () => setIsDragging(false)
+
   const visibleSpots = useMemo(() => {
     return FOOTSTEP_SPOTS.filter((s) => {
       const matchRegion =
@@ -112,7 +164,7 @@ export function FootstepsPage() {
             <button
               key={r}
               type="button"
-              onClick={() => setRegion(r)}
+              onClick={() => handleRegionChange(r)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 region === r
                   ? 'bg-accent text-surface shadow-xs'
@@ -143,10 +195,63 @@ export function FootstepsPage() {
         </div>
       </div>
 
-      {/* Interactive Map Visualizer */}
+      {/* Interactive Map Visualizer with Zoom & Pan */}
       <div className="mt-4 relative overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-md">
-        <div className="relative h-[320px] sm:h-[400px] w-full bg-gradient-to-b from-bg/60 to-surface">
-          <svg viewBox="0 0 800 500" className="h-full w-full select-none">
+        {/* Floating Zoom & Pan Controls */}
+        <div className="absolute top-3 right-3 z-20 flex flex-col items-center gap-1 rounded-2xl border border-border/80 bg-surface/90 p-1.5 shadow-md backdrop-blur-md">
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            title="Zoom In"
+            aria-label="Zoom In"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-text hover:bg-surface-elevated active:scale-95 transition text-base font-bold"
+          >
+            ＋
+          </button>
+          <div className="px-1 text-[10px] font-mono font-medium text-muted select-none">
+            {Math.round(zoom * 100)}%
+          </div>
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            title="Zoom Out"
+            aria-label="Zoom Out"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-text hover:bg-surface-elevated active:scale-95 transition text-base font-bold"
+          >
+            －
+          </button>
+          {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              title="Reset Map View"
+              aria-label="Reset Map View"
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-elevated text-xs text-muted hover:text-text transition mt-0.5"
+            >
+              ⟲
+            </button>
+          )}
+        </div>
+
+        {/* Drag Hint / Indicator */}
+        <div className="absolute bottom-3 left-3 z-10 rounded-full border border-border/60 bg-surface/80 px-2.5 py-1 text-[10px] text-muted backdrop-blur-xs select-none pointer-events-none">
+          🖐️ Drag to pan · Scroll to zoom
+        </div>
+
+        <div
+          className={`relative h-[340px] sm:h-[420px] w-full bg-gradient-to-b from-bg/60 to-surface overflow-hidden ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <svg viewBox="0 0 800 500" className="h-full w-full select-none pointer-events-auto">
             <defs>
               <radialGradient id="mapPinGlow" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.5" />
@@ -154,80 +259,91 @@ export function FootstepsPage() {
               </radialGradient>
             </defs>
 
-            {/* Region outlines/labels */}
-            {region === 'All' && (
-              <>
-                <circle cx="240" cy="120" r="80" fill="currentColor" className="text-accent/5" />
-                <circle cx="620" cy="380" r="110" fill="currentColor" className="text-accent/5" />
-                <text x="240" y="190" textAnchor="middle" fill="currentColor" className="text-muted/40 font-serif text-xs">
-                  Northwest Odisha (Rourkela)
-                </text>
-                <text x="620" y="470" textAnchor="middle" fill="currentColor" className="text-muted/40 font-serif text-xs">
-                  Central / Coastal Odisha (Khurda & Bhubaneswar)
-                </text>
-              </>
-            )}
-
-            {/* Connecting romance trail */}
-            {trailPoints && (
-              <polyline
-                points={trailPoints}
-                fill="none"
-                stroke="#f43f5e"
-                strokeWidth="2.5"
-                strokeDasharray="4 6"
-                strokeOpacity="0.45"
-              />
-            )}
-
-            {/* Landmark Pins */}
-            {visibleSpots.map((spot) => {
-              const { x, y } = project(spot.latitude, spot.longitude, region)
-              const isSelected = selectedSpot.id === spot.id
-
-              return (
-                <g
-                  key={spot.id}
-                  className="cursor-pointer transition-transform duration-200"
-                  onClick={() => setSelectedSpot(spot)}
-                >
-                  {isSelected && (
-                    <circle cx={x} cy={y} r="26" fill="url(#mapPinGlow)" className="animate-pulse" />
-                  )}
-
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={isSelected ? 16 : 12}
-                    fill={isSelected ? '#e11d48' : '#ffffff'}
-                    stroke={isSelected ? '#ffffff' : '#f43f5e'}
-                    strokeWidth="2.5"
-                    className="shadow-sm"
-                  />
-
-                  <text
-                    x={x}
-                    y={y + 4}
-                    textAnchor="middle"
-                    fontSize={isSelected ? '14' : '11'}
-                    className="select-none pointer-events-none"
-                  >
-                    {spot.icon}
+            <g
+              transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}
+              style={{
+                transformOrigin: '400px 250px',
+                transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+              }}
+            >
+              {/* Region outlines/labels */}
+              {region === 'All' && (
+                <>
+                  <circle cx="240" cy="120" r="80" fill="currentColor" className="text-accent/5" />
+                  <circle cx="620" cy="380" r="110" fill="currentColor" className="text-accent/5" />
+                  <text x="240" y="190" textAnchor="middle" fill="currentColor" className="text-muted/40 font-serif text-xs">
+                    Northwest Odisha (Rourkela)
                   </text>
-
-                  <text
-                    x={x}
-                    y={y + (isSelected ? 26 : 22)}
-                    textAnchor="middle"
-                    className={`text-[10px] font-medium tracking-tight pointer-events-none select-none ${
-                      isSelected ? 'fill-accent font-bold drop-shadow-sm' : 'fill-muted'
-                    }`}
-                  >
-                    {spot.name.length > 20 ? spot.name.slice(0, 18) + '…' : spot.name}
+                  <text x="620" y="470" textAnchor="middle" fill="currentColor" className="text-muted/40 font-serif text-xs">
+                    Central / Coastal Odisha (Khurda & Bhubaneswar)
                   </text>
-                </g>
-              )
-            })}
+                </>
+              )}
+
+              {/* Connecting romance trail */}
+              {trailPoints && (
+                <polyline
+                  points={trailPoints}
+                  fill="none"
+                  stroke="#f43f5e"
+                  strokeWidth="2.5"
+                  strokeDasharray="4 6"
+                  strokeOpacity="0.45"
+                />
+              )}
+
+              {/* Landmark Pins */}
+              {visibleSpots.map((spot) => {
+                const { x, y } = project(spot.latitude, spot.longitude, region)
+                const isSelected = selectedSpot.id === spot.id
+
+                return (
+                  <g
+                    key={spot.id}
+                    className="cursor-pointer transition-transform duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedSpot(spot)
+                    }}
+                  >
+                    {isSelected && (
+                      <circle cx={x} cy={y} r="26" fill="url(#mapPinGlow)" className="animate-pulse" />
+                    )}
+
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={isSelected ? 16 : 12}
+                      fill={isSelected ? '#e11d48' : '#ffffff'}
+                      stroke={isSelected ? '#ffffff' : '#f43f5e'}
+                      strokeWidth="2.5"
+                      className="shadow-sm"
+                    />
+
+                    <text
+                      x={x}
+                      y={y + 4}
+                      textAnchor="middle"
+                      fontSize={isSelected ? '14' : '11'}
+                      className="select-none pointer-events-none"
+                    >
+                      {spot.icon}
+                    </text>
+
+                    <text
+                      x={x}
+                      y={y + (isSelected ? 26 : 22)}
+                      textAnchor="middle"
+                      className={`text-[10px] font-medium tracking-tight pointer-events-none select-none ${
+                        isSelected ? 'fill-accent font-bold drop-shadow-sm' : 'fill-muted'
+                      }`}
+                    >
+                      {spot.name.length > 20 ? spot.name.slice(0, 18) + '…' : spot.name}
+                    </text>
+                  </g>
+                )
+              })}
+            </g>
           </svg>
         </div>
 

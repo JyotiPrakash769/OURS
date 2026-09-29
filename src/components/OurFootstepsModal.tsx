@@ -6,30 +6,72 @@ type Props = {
   onClose: () => void
 }
 
-// Coordinate bounds for projecting onto SVG viewBox (width: 800, height: 500)
-// Longitude: 85.55 (West - Khordha) to 85.90 (East - Bhubaneswar)
-// Latitude: 20.15 (South - Khordha) to 20.35 (North - Nayapalli / Chandrasekharpur)
-const MIN_LON = 85.55
-const MAX_LON = 85.9
-const MIN_LAT = 20.15
-const MAX_LAT = 20.35
+const MIN_LON = 84.7
+const MAX_LON = 86.0
+const MIN_LAT = 20.0
+const MAX_LAT = 22.4
 
 function projectCoords(lat: number, lon: number): { x: number; y: number } {
-  const normX = (lon - MIN_LON) / (MAX_LON - MIN_LON)
-  // In SVG, Y is inverted (north is at top, so max lat is at y=0)
-  const normY = 1 - (lat - MIN_LAT) / (MAX_LAT - MIN_LAT)
-
-  // Map to SVG dimensions with padding: 800 x 500
-  const x = 60 + normX * (800 - 120)
-  const y = 50 + normY * (500 - 100)
-  return { x, y }
+  const normX = Math.max(0, Math.min(1, (lon - MIN_LON) / (MAX_LON - MIN_LON)))
+  const normY = Math.max(0, Math.min(1, 1 - (lat - MIN_LAT) / (MAX_LAT - MIN_LAT)))
+  return {
+    x: 50 + normX * (800 - 100),
+    y: 50 + normY * (500 - 100),
+  }
 }
 
 export function OurFootstepsModal({ isOpen, onClose }: Props) {
   const [selectedSpot, setSelectedSpot] = useState<FootstepSpot>(FOOTSTEP_SPOTS[0])
   const [filter, setFilter] = useState<string>('All')
 
+  // Zoom & Pan state
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+
   if (!isOpen) return null
+
+  const handleZoomIn = () => setZoom((z) => Math.min(3.5, +(z + 0.3).toFixed(1)))
+  const handleZoomOut = () => setZoom((z) => Math.max(0.6, +(z - 0.3).toFixed(1)))
+  const handleResetZoom = () => {
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault()
+    const delta = e.deltaY < 0 ? 0.15 : -0.15
+    setZoom((z) => Math.max(0.6, Math.min(3.5, +(z + delta).toFixed(2))))
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return
+    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
+  }
+
+  const handleMouseUp = () => setIsDragging(false)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true)
+      setDragStart({ x: e.touches[0].clientX - pan.x, y: e.touches[0].clientY - pan.y })
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && e.touches.length === 1) {
+      setPan({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y })
+    }
+  }
+
+  const handleTouchEnd = () => setIsDragging(false)
 
   const filteredSpots =
     filter === 'All' ? FOOTSTEP_SPOTS : FOOTSTEP_SPOTS.filter((s) => s.category === filter)
@@ -59,7 +101,7 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
               </h2>
             </div>
             <p className="mt-0.5 text-xs text-muted">
-              Every place in Bhubaneswar & Khordha where our love story has unfolded.
+              From Sector 7, Rourkela, to Janaki Ballav Pattnaik Park and PJ Veena Hall in Khordha.
             </p>
           </div>
           <button
@@ -75,7 +117,7 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
         {/* Stats Row */}
         <div className="grid grid-cols-3 divide-x divide-border/60 border-b border-border/60 bg-surface-elevated/40 text-center py-2.5 px-4 text-xs">
           <div>
-            <p className="font-serif text-base font-medium text-text">9 Spots</p>
+            <p className="font-serif text-base font-medium text-text">10 Spots</p>
             <p className="text-[11px] text-muted">Explored Together</p>
           </div>
           <div>
@@ -84,13 +126,13 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
           </div>
           <div>
             <p className="font-serif text-base font-medium text-text">10 Movies</p>
-            <p className="text-[11px] text-muted">Cinema Dates</p>
+            <p className="text-[11px] text-muted">PJ Veena Hall</p>
           </div>
         </div>
 
         {/* Category Filters */}
         <div className="no-scrollbar flex gap-2 border-b border-border/50 px-6 py-2 overflow-x-auto bg-surface/60">
-          {['All', 'Milestone', 'Kiss', 'Date', 'Sacred', 'Cinema'].map((cat) => (
+          {['All', 'Milestone', 'Kiss', 'Cinema', 'Sacred', 'Moment'].map((cat) => (
             <button
               key={cat}
               type="button"
@@ -106,111 +148,162 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
           ))}
         </div>
 
-        {/* Map Canvas Container */}
-        <div className="relative flex-1 overflow-hidden bg-bg/40 min-h-[280px] sm:min-h-[360px]">
-          <svg
-            viewBox="0 0 800 500"
-            className="h-full w-full select-none"
-            style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.05))' }}
+        {/* Map Canvas Container with Zoom & Pan */}
+        <div className="relative flex-1 overflow-hidden bg-bg/40 min-h-[300px] sm:min-h-[380px]">
+          {/* Floating Zoom & Pan Controls */}
+          <div className="absolute top-3 right-3 z-20 flex flex-col items-center gap-1 rounded-2xl border border-border/80 bg-surface/90 p-1.5 shadow-md backdrop-blur-md">
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              title="Zoom In"
+              aria-label="Zoom In"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-text hover:bg-surface-elevated active:scale-95 transition text-base font-bold"
+            >
+              ＋
+            </button>
+            <div className="px-1 text-[10px] font-mono font-medium text-muted select-none">
+              {Math.round(zoom * 100)}%
+            </div>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              aria-label="Zoom Out"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-text hover:bg-surface-elevated active:scale-95 transition text-base font-bold"
+            >
+              －
+            </button>
+            {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+              <button
+                type="button"
+                onClick={handleResetZoom}
+                title="Reset Map View"
+                aria-label="Reset Map View"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-elevated text-xs text-muted hover:text-text transition mt-0.5"
+              >
+                ⟲
+              </button>
+            )}
+          </div>
+
+          <div
+            className={`h-full w-full ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            <defs>
-              {/* Radial glow for selected pin */}
-              <radialGradient id="pinGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
-              </radialGradient>
-            </defs>
+            <svg
+              viewBox="0 0 800 500"
+              className="h-full w-full select-none"
+              style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.05))' }}
+            >
+              <defs>
+                <radialGradient id="modalPinGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
+                </radialGradient>
+              </defs>
 
-            {/* Background Region Outlines & Atmosphere */}
-            <rect width="800" height="500" fill="transparent" />
+              <g
+                transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}
+                style={{
+                  transformOrigin: '400px 250px',
+                  transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+                }}
+              >
+                {/* Background Atmosphere */}
+                <circle cx="200" cy="300" r="140" fill="currentColor" className="text-accent/5" />
+                <circle cx="580" cy="220" r="190" fill="currentColor" className="text-accent/5" />
 
-            {/* Stylized Regional Zones */}
-            <circle cx="200" cy="300" r="140" fill="currentColor" className="text-accent/5" />
-            <circle cx="580" cy="220" r="190" fill="currentColor" className="text-accent/5" />
+                {/* Region Labels */}
+                <text x="220" y="440" fill="currentColor" className="text-muted/40 font-serif text-xs">
+                  Khurda & Bhubaneswar Corridor
+                </text>
+                <text x="240" y="100" fill="currentColor" className="text-muted/40 font-serif text-xs">
+                  Rourkela (Sector 7)
+                </text>
 
-            {/* Region Labels */}
-            <text x="180" y="440" fill="currentColor" className="text-muted/40 font-serif text-sm">
-              Khordha Region
-            </text>
-            <text x="540" y="80" fill="currentColor" className="text-muted/40 font-serif text-sm">
-              Bhubaneswar City
-            </text>
+                {/* Connecting Romance Trail */}
+                <polyline
+                  points={trailPoints}
+                  fill="none"
+                  stroke="#f43f5e"
+                  strokeWidth="2"
+                  strokeDasharray="4 6"
+                  strokeOpacity="0.4"
+                />
 
-            {/* Connecting Romance Trail */}
-            <polyline
-              points={trailPoints}
-              fill="none"
-              stroke="#f43f5e"
-              strokeWidth="2"
-              strokeDasharray="4 6"
-              strokeOpacity="0.4"
-            />
+                {/* Footstep Spot Pins */}
+                {filteredSpots.map((spot) => {
+                  const { x, y } = projectCoords(spot.latitude, spot.longitude)
+                  const isSelected = selectedSpot.id === spot.id
 
-            {/* Footstep Spot Pins */}
-            {filteredSpots.map((spot) => {
-              const { x, y } = projectCoords(spot.latitude, spot.longitude)
-              const isSelected = selectedSpot.id === spot.id
+                  return (
+                    <g
+                      key={spot.id}
+                      className="cursor-pointer transition-transform duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedSpot(spot)
+                      }}
+                    >
+                      {isSelected && (
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r="24"
+                          fill="url(#modalPinGlow)"
+                          className="animate-pulse"
+                        />
+                      )}
 
-              return (
-                <g
-                  key={spot.id}
-                  className="cursor-pointer transition-transform duration-200"
-                  onClick={() => setSelectedSpot(spot)}
-                >
-                  {/* Selected Pulse Ring */}
-                  {isSelected && (
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r="24"
-                      fill="url(#pinGlow)"
-                      className="animate-pulse"
-                    />
-                  )}
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r={isSelected ? 16 : 12}
+                        fill={isSelected ? '#e11d48' : '#ffffff'}
+                        stroke={isSelected ? '#ffffff' : '#f43f5e'}
+                        strokeWidth="2.5"
+                        className="shadow-md transition-all"
+                      />
 
-                  {/* Marker Pin Base */}
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={isSelected ? 16 : 12}
-                    fill={isSelected ? '#e11d48' : '#ffffff'}
-                    stroke={isSelected ? '#ffffff' : '#f43f5e'}
-                    strokeWidth="2.5"
-                    className="shadow-md transition-all"
-                  />
+                      <text
+                        x={x}
+                        y={y + 4}
+                        textAnchor="middle"
+                        fontSize={isSelected ? '14' : '11'}
+                        className="select-none pointer-events-none"
+                      >
+                        {spot.icon}
+                      </text>
 
-                  {/* Pin Emoji Icon */}
-                  <text
-                    x={x}
-                    y={y + 4}
-                    textAnchor="middle"
-                    fontSize={isSelected ? '14' : '11'}
-                    className="select-none pointer-events-none"
-                  >
-                    {spot.icon}
-                  </text>
-
-                  {/* Pin Name Label */}
-                  <text
-                    x={x}
-                    y={y + (isSelected ? 26 : 22)}
-                    textAnchor="middle"
-                    className={`text-[10px] font-medium tracking-tight pointer-events-none select-none ${
-                      isSelected
-                        ? 'fill-accent font-bold drop-shadow-sm'
-                        : 'fill-muted dark:fill-muted'
-                    }`}
-                  >
-                    {spot.name.length > 18 ? spot.name.slice(0, 16) + '…' : spot.name}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
+                      <text
+                        x={x}
+                        y={y + (isSelected ? 26 : 22)}
+                        textAnchor="middle"
+                        className={`text-[10px] font-medium tracking-tight pointer-events-none select-none ${
+                          isSelected
+                            ? 'fill-accent font-bold drop-shadow-sm'
+                            : 'fill-muted dark:fill-muted'
+                        }`}
+                      >
+                        {spot.name.length > 18 ? spot.name.slice(0, 16) + '…' : spot.name}
+                      </text>
+                    </g>
+                  )
+                })}
+              </g>
+            </svg>
+          </div>
         </div>
 
         {/* Selected Spot Detail Drawer */}
-        <div className="border-t border-border/70 bg-surface p-5 sm:p-6 transition-all duration-300">
+        <div className="border-t border-border/70 bg-surface p-5 sm:p-6 transition-all duration-300 text-left">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
