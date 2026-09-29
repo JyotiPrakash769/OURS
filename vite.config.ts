@@ -26,7 +26,11 @@ export default defineConfig({
         ],
       },
       // App shell + static assets only; private dynamic data is never cached offline.
-      workbox: { globPatterns: ['**/*.{js,css,html,woff2,png}'], navigateFallback: '/index.html' },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,woff2,png}'],
+        navigateFallback: '/index.html',
+        importScripts: ['/sw-push.js'],
+      },
     }),
   ],
 })

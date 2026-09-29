@@ -10,9 +10,10 @@ import {
   updateFutureItem,
   type FutureItem,
 } from '../lib/future'
+import { sendNotificationToPartner } from '../lib/notifications'
 
 export function FuturePage() {
-  const { relationship } = useApp()
+  const { relationship, me } = useApp()
   const [items, setItems] = useState<FutureItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -71,6 +72,12 @@ export function FuturePage() {
     try {
       const created = await createFutureItem(relationship.id, newTitle)
       setItems((prev) => [created, ...prev])
+      sendNotificationToPartner({
+        relationshipId: relationship.id,
+        title: '🧭 New Bucket List Goal',
+        body: `${me?.display_name || 'Your partner'} added "${newTitle}" to Our Future.`,
+        url: '/app/future',
+      })
       setNewTitle('')
     } catch (err: unknown) {
       const msg =
@@ -103,6 +110,14 @@ export function FuturePage() {
     try {
       const updated = await toggleFutureItem(item.id, nextCompleted)
       setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
+      if (nextCompleted) {
+        sendNotificationToPartner({
+          relationshipId: relationship.id,
+          title: '🎉 Dream Completed!',
+          body: `We just checked off "${item.title}" together! 💕`,
+          url: '/app/future',
+        })
+      }
     } catch {
       // Revert on failure
       setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)))

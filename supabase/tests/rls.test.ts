@@ -399,6 +399,38 @@ describe('letters authorization', () => {
       /access denied/,
     )
   })
+
+  it('manages push subscriptions and allows partner lookup', async () => {
+    // Alice inserts her subscription
+    await as(
+      alice,
+      `insert into public.push_subscriptions (user_id, relationship_id, endpoint, p256dh, auth)
+       values ($1, $2, 'https://push.example.com/alice', 'p256_alice', 'auth_alice')`,
+      [alice, relId],
+    )
+
+    // Bob inserts his subscription
+    await as(
+      bob,
+      `insert into public.push_subscriptions (user_id, relationship_id, endpoint, p256dh, auth)
+       values ($1, $2, 'https://push.example.com/bob', 'p256_bob', 'auth_bob')`,
+      [bob, relId],
+    )
+
+    // Carol cannot see Alice's subscription
+    const carolQuery = await as(carol, 'select * from public.push_subscriptions where user_id = $1', [alice])
+    expect(carolQuery.rows).toHaveLength(0)
+
+    // Alice queries partner push subscriptions and receives Bob's endpoint
+    const partnerSubs = await as(alice, 'select * from public.get_partner_push_subscriptions($1)', [relId])
+    expect(partnerSubs.rows).toHaveLength(1)
+    expect(partnerSubs.rows[0].endpoint).toBe('https://push.example.com/bob')
+
+    // Carol calling get_partner_push_subscriptions is rejected
+    await expect(as(carol, 'select * from public.get_partner_push_subscriptions($1)', [relId])).rejects.toThrow(
+      /unauthorized/,
+    )
+  })
 })
 
 

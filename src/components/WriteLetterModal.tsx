@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { sendLetter, type LetterInput } from '../lib/letters'
+import { sendNotificationToPartner } from '../lib/notifications'
 
 type Props = {
   relationshipId: string
@@ -57,6 +58,12 @@ export function WriteLetterModal({
         unlock_at: unlockInstant.toISOString(),
       }
       await sendLetter(relationshipId, input)
+      sendNotificationToPartner({
+        relationshipId,
+        title: '💌 A Secret Letter Was Sealed',
+        body: `A secret time-locked letter was sealed with wax for you.`,
+        url: '/app/letters',
+      })
       onSent()
       onClose()
     } catch (err: unknown) {

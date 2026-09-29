@@ -18,6 +18,7 @@ import {
   uploadMemoryPhoto,
   type MemoryMedia,
 } from '../lib/storage'
+import { sendNotificationToPartner } from '../lib/notifications'
 
 const CATEGORY_FILTERS: { value: MemoryCategory | 'All'; label: string; icon?: string }[] = [
   { value: 'All', label: 'All' },
@@ -28,7 +29,7 @@ const CATEGORY_FILTERS: { value: MemoryCategory | 'All'; label: string; icon?: s
 ]
 
 export function Story() {
-  const { relationship } = useApp()
+  const { relationship, me } = useApp()
   const [memories, setMemories] = useState<Memory[]>([])
   const [mediaMap, setMediaMap] = useState<Record<string, MemoryMedia[]>>({})
   const [loading, setLoading] = useState(true)
@@ -107,6 +108,12 @@ export function Story() {
     } else {
       savedMemory = await createMemory(relationship.id, input)
       setMemories((prev) => [savedMemory, ...prev])
+      sendNotificationToPartner({
+        relationshipId: relationship.id,
+        title: '✨ New Memory Added',
+        body: `${me?.display_name || 'Your partner'} added "${savedMemory.title}" to Our Story.`,
+        url: '/app/story',
+      })
     }
 
     if (photoFile) {

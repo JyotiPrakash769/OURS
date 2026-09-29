@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { ThemeToggle } from './ThemeToggle'
+import { NotificationToggle } from './NotificationToggle'
 
 // Letters are reached from Home and desktop TopBar, not the mobile bottom nav (per spec).
 const items = [
@@ -43,6 +44,7 @@ export function TopBar() {
         >
           💌
         </NavLink>
+        <NotificationToggle />
         <ThemeToggle />
         <button type="button" onClick={signOut} className="min-h-11 px-2 text-sm text-muted hover:text-text">
           Log out
