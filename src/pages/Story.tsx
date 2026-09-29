@@ -43,11 +43,6 @@ export function Story() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null)
 
-  const unimportedCount = useMemo(() => {
-    const existingTitles = new Set(memories.map((m) => m.title.trim().toLowerCase()))
-    return DEFAULT_MEMORIES.filter((d) => !existingTitles.has(d.title.trim().toLowerCase())).length
-  }, [memories])
-
   const handleImportDefaultMemories = async () => {
     try {
       setImporting(true)
