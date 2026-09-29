@@ -1,27 +1,87 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../lib/auth'
 import type { CelebrationType } from '../lib/celebrations'
+import { createInvite, unlinkPartner, type Profile, type Relationship } from '../lib/relationship'
 
 type Props = {
   isOpen: boolean
   onClose: () => void
+  relationship?: Relationship | null
+  me?: Profile | null
+  partner?: Profile | null
+  onRefresh?: () => void
 }
 
 type Tab = 'account' | 'anniversaries' | 'features'
 
-export function AccountModal({ isOpen, onClose }: Props) {
-  const { deleteAccount, signOut } = useAuth()
+export function AccountModal({ isOpen, onClose, relationship, me, partner, onRefresh }: Props) {
+  const { deleteAccount, signOut, userId } = useAuth()
+  const isCreator = Boolean(relationship && userId && relationship.user_a_id === userId)
+
   const [activeTab, setActiveTab] = useState<Tab>('account')
   const [confirming, setConfirming] = useState(false)
   const [confirmInput, setConfirmInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Partner management states (only creator can unlink/add)
+  const [unlinkConfirming, setUnlinkConfirming] = useState(false)
+  const [unlinkLoading, setUnlinkLoading] = useState(false)
+  const [unlinkSuccess, setUnlinkSuccess] = useState<string | null>(null)
+
+  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [inviteCopied, setInviteCopied] = useState(false)
+  const [inviteBusy, setInviteBusy] = useState(false)
+
   const [activePreview, setActivePreview] = useState<CelebrationType | null>(() => {
     return (localStorage.getItem('ours_celebration_preview') as CelebrationType) || null
   })
 
   if (!isOpen) return null
+
+  const handleUnlinkPartner = async () => {
+    setUnlinkLoading(true)
+    setError(null)
+    setUnlinkSuccess(null)
+    try {
+      await unlinkPartner()
+      setUnlinkConfirming(false)
+      setUnlinkSuccess('Partner unlinked and removed. Your partner slot is open, and you can now invite someone else!')
+      onRefresh?.()
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not remove partner. Please make sure database migration 0010 is applied.'
+      )
+    } finally {
+      setUnlinkLoading(false)
+    }
+  }
+
+  const handleGenerateInvite = async () => {
+    setInviteBusy(true)
+    setError(null)
+    try {
+      const token = await createInvite()
+      setInviteLink(`${window.location.origin}/invite/${token}`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Could not create invite.')
+    } finally {
+      setInviteBusy(false)
+    }
+  }
+
+  const handleCopyInvite = async () => {
+    if (!inviteLink) return
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setInviteCopied(true)
+      setTimeout(() => setInviteCopied(false), 2500)
+    } catch {
+      setError('Could not copy automatically. Please copy the link manually.')
+    }
+  }
 
   const handleSetPreview = (type: CelebrationType) => {
     if (type === 'none') {
@@ -125,9 +185,133 @@ export function AccountModal({ isOpen, onClose }: Props) {
             </div>
           )}
 
+          {unlinkSuccess && (
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
+              {unlinkSuccess}
+            </div>
+          )}
+
           {/* TAB 1: ACCOUNT & SESSION */}
           {activeTab === 'account' && (
             <div className="space-y-6">
+              {/* Profile Card */}
+              <div className="rounded-xl border border-border bg-bg/50 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-text">{me?.display_name || 'Your Profile'}</p>
+                    <p className="text-xs text-muted">
+                      {isCreator ? 'Space Creator (Only you can manage partners)' : 'Partner'}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent">
+                    {isCreator ? '👑 Creator' : '💖 Partner'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Partner Management (Only Creator user_a can add/unadd) */}
+              <div className="rounded-xl border border-border bg-bg/50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
+                    Partner Access & Connection
+                  </h3>
+                  {isCreator && (
+                    <span className="text-[10px] text-muted bg-surface px-2 py-0.5 rounded border border-border">
+                      Admin Control: Only You
+                    </span>
+                  )}
+                </div>
+
+                {partner ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between rounded-lg border border-border/80 bg-surface p-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">👩‍❤️‍👨</span>
+                        <div>
+                          <p className="text-xs font-semibold text-text">{partner.display_name}</p>
+                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">● Connected</p>
+                        </div>
+                      </div>
+                      {isCreator && (
+                        <button
+                          type="button"
+                          onClick={() => setUnlinkConfirming(true)}
+                          className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-500/20 dark:text-red-400 transition"
+                        >
+                          Unlink / Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {isCreator && unlinkConfirming && (
+                      <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-3 space-y-2.5 text-left">
+                        <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                          Remove {partner.display_name} from your space?
+                        </p>
+                        <p className="text-[11px] text-muted leading-relaxed">
+                          This will disconnect this partner and delete the test account so your partner slot is open again. All your memories and stories remain safe.
+                        </p>
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled={unlinkLoading}
+                            onClick={handleUnlinkPartner}
+                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 transition"
+                          >
+                            {unlinkLoading ? 'Unlinking...' : 'Yes, Remove Partner'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUnlinkConfirming(false)}
+                            className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:text-text transition"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2.5 rounded-lg border border-dashed border-border p-3 text-left">
+                    <p className="text-xs text-muted">No partner is currently connected.</p>
+                    {isCreator ? (
+                      <div className="space-y-2 pt-1">
+                        {inviteLink ? (
+                          <div className="space-y-2">
+                            <input
+                              readOnly
+                              value={inviteLink}
+                              onFocus={(e) => e.target.select()}
+                              aria-label="Invite link"
+                              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-mono text-text"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleCopyInvite}
+                              className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent/90"
+                            >
+                              {inviteCopied ? '✓ Copied Invite Link!' : 'Copy Invite Link'}
+                            </button>
+                            <p className="text-[11px] text-muted">Send this link to your actual girlfriend. Valid for 7 days.</p>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={inviteBusy}
+                            onClick={handleGenerateInvite}
+                            className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent/90 disabled:opacity-50"
+                          >
+                            {inviteBusy ? 'Generating...' : '➕ Generate Invite Link'}
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted italic">Only the relationship creator can connect a partner.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center justify-between rounded-xl border border-border bg-bg/50 p-4">
                 <div>
                   <p className="text-sm font-medium text-text">Sign Out</p>

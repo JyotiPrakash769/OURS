@@ -464,6 +464,26 @@ describe('letters authorization', () => {
     // Unauthenticated call should fail
     await expect(as(null, 'select public.delete_user_account()')).rejects.toThrow()
   })
+
+  it('allows only the creator (user_a) to unlink a partner and re-invite', async () => {
+    // Bob (user_b) attempts to unlink partner -> Rejected
+    await expect(as(bob, 'select public.unlink_partner()')).rejects.toThrow(/Only the relationship creator/)
+
+    // Alice (user_a) unlinks Bob
+    await as(alice, 'select public.unlink_partner()')
+
+    // Relationship user_b_id is now NULL
+    const rel = await asAdmin('select user_b_id from public.relationships where user_a_id = $1', [alice])
+    expect(rel.rows[0].user_b_id).toBeNull()
+
+    // Bob was purged from profiles
+    const bobProf = await asAdmin('select * from public.profiles where id = $1', [bob])
+    expect(bobProf.rows).toHaveLength(0)
+
+    // Alice can immediately generate a fresh invite for her actual partner!
+    const inviteRes = await as(alice, 'select public.create_invite() as token')
+    expect(typeof inviteRes.rows[0].token).toBe('string')
+  })
 })
 
 

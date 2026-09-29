@@ -42,7 +42,13 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-dvh flex-col pb-20 md:pb-0">
-      <TopBar relationshipId={state.kind === 'ready' ? state.relationship?.id : undefined} />
+      <TopBar
+        relationshipId={state.kind === 'ready' ? state.relationship?.id : undefined}
+        relationship={state.kind === 'ready' ? state.relationship : undefined}
+        me={state.kind === 'ready' ? state.me : undefined}
+        partner={state.kind === 'ready' ? state.partner : undefined}
+        onRefresh={refresh}
+      />
       <main className="flex flex-1 flex-col">
         {state.kind === 'error' && (
           <p role="alert" className="m-auto px-6 text-center text-muted">

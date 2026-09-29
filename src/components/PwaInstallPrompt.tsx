@@ -7,24 +7,28 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isStandalone, setIsStandalone] = useState(false)
-  const [isIos, setIsIos] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ('standalone' in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone === true)
+    )
+  })
+  const [isIos] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase())
+  })
   const [showModal, setShowModal] = useState(false)
   const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false
     return localStorage.getItem('ours_pwa_prompt_dismissed') === 'true'
   })
 
   useEffect(() => {
-    // Check if app is already running standalone
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      ('standalone' in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone === true)
-    setIsStandalone(standalone)
-
-    // Detect iOS device
-    const userAgent = window.navigator.userAgent.toLowerCase()
-    const ios = /iphone|ipad|ipod/.test(userAgent)
-    setIsIos(ios)
+    // Listen for display mode change
+    const media = window.matchMedia('(display-mode: standalone)')
+    const handleModeChange = (e: MediaQueryListEvent) => setIsStandalone(e.matches)
+    media.addEventListener('change', handleModeChange)
 
     // Capture Chrome/Android beforeinstallprompt
     const handleBeforeInstall = (e: Event) => {
@@ -33,7 +37,10 @@ export function PwaInstallPrompt() {
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall)
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
+    return () => {
+      media.removeEventListener('change', handleModeChange)
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
+    }
   }, [])
 
   const handleInstallClick = async () => {

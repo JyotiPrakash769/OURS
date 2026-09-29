@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationToggle } from './NotificationToggle'
 import { AccountModal } from './AccountModal'
+import type { Profile, Relationship } from '../lib/relationship'
 
 // Letters are reached from Home and desktop TopBar, not the mobile bottom nav (per spec).
 const items = [
@@ -19,7 +20,15 @@ const desktopItems = [
   { to: '/app/letters', label: 'Letters', end: false },
 ] as const
 
-export function TopBar({ relationshipId }: { relationshipId?: string }) {
+type TopBarProps = {
+  relationshipId?: string
+  relationship?: Relationship | null
+  me?: Profile | null
+  partner?: Profile | null
+  onRefresh?: () => void
+}
+
+export function TopBar({ relationshipId, relationship, me, partner, onRefresh }: TopBarProps) {
   const { signOut } = useAuth()
   const [accountOpen, setAccountOpen] = useState(false)
 
@@ -66,7 +75,14 @@ export function TopBar({ relationshipId }: { relationshipId?: string }) {
           </button>
         </div>
       </header>
-      <AccountModal isOpen={accountOpen} onClose={() => setAccountOpen(false)} />
+      <AccountModal
+        isOpen={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        relationship={relationship}
+        me={me}
+        partner={partner}
+        onRefresh={onRefresh}
+      />
     </>
   )
 }

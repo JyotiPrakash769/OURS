@@ -39,3 +39,8 @@ export async function acceptInvite(token: string): Promise<void> {
   const { error } = await db().rpc('accept_invite', { p_token: token })
   if (error) throw error
 }
+
+export async function unlinkPartner(): Promise<void> {
+  const { error } = await db().rpc('unlink_partner')
+  if (error) throw error
+}
