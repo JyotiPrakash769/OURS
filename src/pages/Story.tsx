@@ -5,6 +5,7 @@ import { TimelineCard } from '../components/TimelineCard'
 import { useApp } from '../lib/appContext'
 import {
   createMemory,
+  createMemoriesBatch,
   deleteMemory,
   loadMemories,
   updateMemory,
@@ -12,6 +13,7 @@ import {
   type MemoryCategory,
   type MemoryInput,
 } from '../lib/memories'
+import { DEFAULT_MEMORIES } from '../lib/defaultMemories'
 import {
   deleteMemoryMedia,
   loadMediaForMemories,
@@ -34,10 +36,45 @@ export function Story() {
   const [mediaMap, setMediaMap] = useState<Record<string, MemoryMedia[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importSuccess, setImportSuccess] = useState<string | null>(null)
 
   const [activeCategory, setActiveCategory] = useState<MemoryCategory | 'All'>('All')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null)
+
+  const unimportedCount = useMemo(() => {
+    const existingTitles = new Set(memories.map((m) => m.title.trim().toLowerCase()))
+    return DEFAULT_MEMORIES.filter((d) => !existingTitles.has(d.title.trim().toLowerCase())).length
+  }, [memories])
+
+  const handleImportDefaultMemories = async () => {
+    try {
+      setImporting(true)
+      setError(null)
+      const existingTitles = new Set(memories.map((m) => m.title.trim().toLowerCase()))
+      const toInsert = DEFAULT_MEMORIES.filter(
+        (m) => !existingTitles.has(m.title.trim().toLowerCase())
+      )
+
+      if (toInsert.length === 0) {
+        setImportSuccess('All 23 memories are already in your story!')
+        setTimeout(() => setImportSuccess(null), 4000)
+        return
+      }
+
+      const inserted = await createMemoriesBatch(relationship.id, toInsert)
+      setMemories((prev) =>
+        [...inserted, ...prev].sort((a, b) => b.memory_date.localeCompare(a.memory_date))
+      )
+      setImportSuccess(`Successfully added ${inserted.length} memories to Our Story! ❤️`)
+      setTimeout(() => setImportSuccess(null), 5000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not import memories.')
+    } finally {
+      setImporting(false)
+    }
+  }
 
   const startYear = useMemo(() => {
     return new Date(relationship.relationship_start_at).getFullYear()
@@ -148,6 +185,13 @@ export function Story() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6">
+      {/* Success alert */}
+      {importSuccess && (
+        <div className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-center text-xs font-medium text-emerald-800 dark:text-emerald-300 animate-in fade-in">
+          {importSuccess}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -159,17 +203,30 @@ export function Story() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setEditingMemory(null)
-            setModalOpen(true)
-          }}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-surface shadow-xs transition hover:opacity-90 active:scale-[0.98]"
-        >
-          <span className="text-base leading-none">＋</span>
-          <span>Add Memory</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {unimportedCount > 0 && memories.length > 0 && (
+            <button
+              type="button"
+              disabled={importing}
+              onClick={handleImportDefaultMemories}
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent-soft/30 px-4 py-2.5 text-xs font-medium text-accent shadow-xs transition hover:bg-accent-soft/50 active:scale-[0.98] disabled:opacity-50"
+            >
+              <span>{importing ? 'Adding...' : `✨ Add ${unimportedCount} Predefined Memories`}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setEditingMemory(null)
+              setModalOpen(true)
+            }}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-surface shadow-xs transition hover:opacity-90 active:scale-[0.98]"
+          >
+            <span className="text-base leading-none">＋</span>
+            <span>Add Memory</span>
+          </button>
+        </div>
       </div>
 
       {/* Category Filter Pills */}
@@ -214,21 +271,42 @@ export function Story() {
             </button>
           </div>
         ) : filteredMemories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
             {memories.length === 0 ? (
-              <>
-                <EmptyState title="Nothing here yet." line="Your story is waiting for its first page." />
+              <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full">
+                <div className="rounded-2xl border border-accent/25 bg-accent-soft/30 p-6 shadow-sm w-full">
+                  <div className="text-3xl mb-2">📖✨</div>
+                  <h3 className="font-serif text-xl font-medium text-text">Your Story Timeline Ready</h3>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    All 23 of your dates, movies, park walks, and milestones from 5th July to 29th September are ready to add in one click!
+                  </p>
+                  <button
+                    type="button"
+                    disabled={importing}
+                    onClick={handleImportDefaultMemories}
+                    className="mt-5 w-full inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-medium text-surface shadow-xs transition hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                  >
+                    <span>{importing ? 'Adding all 23 memories...' : '✨ Add All 23 Memories (1-Click)'}</span>
+                  </button>
+                </div>
+
+                <div className="my-6 flex items-center gap-3 w-full">
+                  <div className="h-px flex-1 bg-border/60" />
+                  <span className="text-xs text-muted">or start blank</span>
+                  <div className="h-px flex-1 bg-border/60" />
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
                     setEditingMemory(null)
                     setModalOpen(true)
                   }}
-                  className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-accent px-5 text-sm font-medium text-surface shadow-xs transition hover:opacity-90"
+                  className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-border bg-surface px-4 text-xs font-medium text-text transition hover:bg-surface-elevated"
                 >
-                  <span>Save our first memory</span>
+                  <span>＋ Save a custom memory</span>
                 </button>
-              </>
+              </div>
             ) : (
               <EmptyState title="No matching memories." line="Try selecting a different category filter above." />
             )}

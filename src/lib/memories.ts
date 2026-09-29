@@ -87,3 +87,25 @@ export async function deleteMemory(id: string): Promise<void> {
   const { error } = await db().from('memories').delete().eq('id', id)
   if (error) throw error
 }
+
+export async function createMemoriesBatch(
+  relationshipId: string,
+  inputs: MemoryInput[]
+): Promise<Memory[]> {
+  const rows = inputs.map((input) => ({
+    relationship_id: relationshipId,
+    title: input.title.trim(),
+    description: input.description?.trim() || null,
+    memory_date: input.memory_date,
+    memory_time: input.memory_time || null,
+    location_name: input.location_name?.trim() || null,
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
+    category: input.category,
+  }))
+
+  const { data, error } = await db().from('memories').insert(rows).select()
+  if (error) throw error
+  return (data ?? []) as Memory[]
+}
+
