@@ -3,6 +3,8 @@
 # OURS ♡
 ### A Private Digital Sanctuary for Two
 
+[![Live App](https://img.shields.io/badge/Live_App-ours--story.vercel.app-E11D48?style=for-the-badge&logo=vercel&logoColor=white)](https://ours-story.vercel.app)
+<br /><br />
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-19.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -20,6 +22,8 @@
 
 **OURS** is a private, two-person progressive web app (PWA) designed to preserve your shared journey.  
 No public feeds. No algorithms. No likes. No follower counts. Just you, your partner, and your memories.
+
+### 🌐 [**Visit Live App: https://ours-story.vercel.app**](https://ours-story.vercel.app)
 
 [Why OURS?](#-why-ours-was-made) •
 [Features](#-the-five-core-spaces) •
