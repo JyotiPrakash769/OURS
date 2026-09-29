@@ -18,8 +18,25 @@ export function Home() {
   const [now] = useState(() => new Date())
   const next = useMemo(() => nextMilestone(startAt, now, relationship.timezone), [startAt, now, relationship.timezone])
 
-  const [previewType, setPreviewType] = useState<CelebrationType | undefined>(undefined)
+  const [previewType, setPreviewType] = useState<CelebrationType | undefined>(() => {
+    const saved = localStorage.getItem('ours_celebration_preview')
+    return (saved as CelebrationType) || undefined
+  })
   const [animationActive, setAnimationActive] = useState(true)
+
+  useEffect(() => {
+    const handleCelebrationChange = () => {
+      const saved = localStorage.getItem('ours_celebration_preview')
+      setPreviewType((saved as CelebrationType) || undefined)
+      setAnimationActive(true)
+    }
+    window.addEventListener('storage', handleCelebrationChange)
+    window.addEventListener('ours_celebration_change', handleCelebrationChange)
+    return () => {
+      window.removeEventListener('storage', handleCelebrationChange)
+      window.removeEventListener('ours_celebration_change', handleCelebrationChange)
+    }
+  }, [])
 
   const celebration = useMemo(() => {
     return getCelebrationInfo(
@@ -65,11 +82,12 @@ export function Home() {
           <CelebrationBanner
             celebration={celebration}
             onReplay={handleReplay}
-            onSelectPreview={(type) => {
-              setPreviewType(type)
-              setAnimationActive(true)
+            isCustomPreview={Boolean(previewType && previewType !== 'none')}
+            onResetPreview={() => {
+              setPreviewType(undefined)
+              localStorage.removeItem('ours_celebration_preview')
+              window.dispatchEvent(new Event('ours_celebration_change'))
             }}
-            currentPreview={previewType}
           />
         </>
       )}

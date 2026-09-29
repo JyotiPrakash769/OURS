@@ -204,17 +204,6 @@ export function Story() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {unimportedCount > 0 && memories.length > 0 && (
-            <button
-              type="button"
-              disabled={importing}
-              onClick={handleImportDefaultMemories}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent-soft/30 px-4 py-2.5 text-xs font-medium text-accent shadow-xs transition hover:bg-accent-soft/50 active:scale-[0.98] disabled:opacity-50"
-            >
-              <span>{importing ? 'Adding...' : `✨ Add ${unimportedCount} Predefined Memories`}</span>
-            </button>
-          )}
-
           <button
             type="button"
             onClick={() => {

@@ -1,22 +1,19 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { CelebrationInfo, CelebrationType } from '../lib/celebrations'
+import type { CelebrationInfo } from '../lib/celebrations'
 
 type Props = {
   celebration: CelebrationInfo
   onReplay: () => void
-  onSelectPreview?: (type: CelebrationType) => void
-  currentPreview?: CelebrationType
+  isCustomPreview?: boolean
+  onResetPreview?: () => void
 }
 
 export function CelebrationBanner({
   celebration,
   onReplay,
-  onSelectPreview,
-  currentPreview,
+  isCustomPreview,
+  onResetPreview,
 }: Props) {
-  const [showPreviewMenu, setShowPreviewMenu] = useState(false)
-
   return (
     <section
       aria-label="Anniversary Celebration"
@@ -32,11 +29,21 @@ export function CelebrationBanner({
         style={{ background: celebration.bgGlow }}
       />
 
-      {/* Top Badge */}
-      <div className="relative mb-3 flex items-center justify-center">
+      {/* Top Badge & Optional Preview Reset */}
+      <div className="relative mb-3 flex items-center justify-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-surface/30 bg-surface/70 px-3.5 py-1 text-xs font-semibold tracking-wide uppercase shadow-xs backdrop-blur-md">
           {celebration.badgeLabel}
         </span>
+        {isCustomPreview && onResetPreview && (
+          <button
+            type="button"
+            onClick={onResetPreview}
+            className="rounded-full bg-surface/80 px-2.5 py-0.5 text-[10px] text-muted hover:text-text transition"
+            title="Reset to today's real date"
+          >
+            ✕ Reset
+          </button>
+        )}
       </div>
 
       {/* Headline */}
@@ -49,8 +56,8 @@ export function CelebrationBanner({
         {celebration.title}
       </h2>
 
-      {/* The Specific Wish requested by user */}
-      <div className="mx-auto mt-3 max-w-lg rounded-2xl border border-surface/40 bg-surface/80 p-4 shadow-xs backdrop-blur-md">
+      {/* The Romantic Couple Wish */}
+      <div className="mx-auto mt-3 max-w-lg rounded-2xl border border-surface/40 bg-surface/85 p-4 shadow-xs backdrop-blur-md">
         <p className="font-serif text-base font-medium text-text sm:text-lg leading-snug">
           {celebration.wish}
         </p>
@@ -77,85 +84,7 @@ export function CelebrationBanner({
           <span>💌</span>
           <span>Write Love Letter</span>
         </Link>
-
-        {onSelectPreview && (
-          <button
-            type="button"
-            onClick={() => setShowPreviewMenu((v) => !v)}
-            className="inline-flex min-h-[42px] items-center gap-1.5 rounded-xl border border-border/60 bg-surface/60 px-3 py-2 text-xs font-medium text-muted transition hover:bg-surface hover:text-text"
-            title="Preview all 4 anniversary milestone designs"
-          >
-            <span>🔮</span>
-            <span>{showPreviewMenu ? 'Close Preview' : 'Preview Modes'}</span>
-          </button>
-        )}
       </div>
-
-      {/* Preview Mode Selector Dropdown */}
-      {showPreviewMenu && onSelectPreview && (
-        <div className="mt-5 rounded-2xl border border-border/80 bg-surface/95 p-3 text-left shadow-md backdrop-blur-md animate-in fade-in">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted px-2 mb-2">
-            Preview Celebration Themes:
-          </p>
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-            <button
-              type="button"
-              onClick={() => onSelectPreview('kiss_day')}
-              className={`rounded-lg px-2.5 py-2 text-xs font-medium text-center transition ${
-                currentPreview === 'kiss_day'
-                  ? 'bg-rose-500 text-white shadow-xs'
-                  : 'bg-surface-elevated hover:bg-border/40 text-text'
-              }`}
-            >
-              💋 25th Kiss Day
-            </button>
-            <button
-              type="button"
-              onClick={() => onSelectPreview('monthly_anniversary')}
-              className={`rounded-lg px-2.5 py-2 text-xs font-medium text-center transition ${
-                currentPreview === 'monthly_anniversary'
-                  ? 'bg-accent text-white shadow-xs'
-                  : 'bg-surface-elevated hover:bg-border/40 text-text'
-              }`}
-            >
-              🎉 29th Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => onSelectPreview('half_year_jubilee')}
-              className={`rounded-lg px-2.5 py-2 text-xs font-medium text-center transition ${
-                currentPreview === 'half_year_jubilee'
-                  ? 'bg-purple-600 text-white shadow-xs'
-                  : 'bg-surface-elevated hover:bg-border/40 text-text'
-              }`}
-            >
-              🌸 6-Month Mark
-            </button>
-            <button
-              type="button"
-              onClick={() => onSelectPreview('annual_grand_gala')}
-              className={`rounded-lg px-2.5 py-2 text-xs font-medium text-center transition ${
-                currentPreview === 'annual_grand_gala'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-surface-elevated hover:bg-border/40 text-text'
-              }`}
-            >
-              👑 29 July Grand
-            </button>
-          </div>
-          {currentPreview && (
-            <div className="mt-2 text-center">
-              <button
-                type="button"
-                onClick={() => onSelectPreview('none')}
-                className="text-[11px] text-muted underline hover:text-text"
-              >
-                Reset to today's real date
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </section>
   )
 }
