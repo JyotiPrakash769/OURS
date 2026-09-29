@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import type { AppContext } from '../lib/appContext'
 import { loadMyRelationship, loadProfiles, type Profile, type Relationship } from '../lib/relationship'
 import { BottomNavigation, TopBar } from './Navigation'
+import { PwaInstallPrompt } from './PwaInstallPrompt'
 import { Setup } from './Setup'
 
 type State =
@@ -65,6 +66,7 @@ export function AppLayout() {
           ))}
       </main>
       <BottomNavigation />
+      <PwaInstallPrompt />
     </div>
   )
 }

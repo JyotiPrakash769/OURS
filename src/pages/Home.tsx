@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CelebrationBanner } from '../components/CelebrationBanner'
 import { CelebrationCanvas } from '../components/CelebrationCanvas'
+import { FootstepsPreviewCard } from '../components/FootstepsPreviewCard'
 import { InvitePanel } from '../components/InvitePanel'
 import { OnThisDayCard } from '../components/OnThisDayCard'
 import { RelationshipCounter } from '../components/RelationshipCounter'
@@ -107,8 +108,11 @@ export function Home() {
         timeZone={relationship.timezone}
       />
 
+      {/* Our Footsteps Date Map */}
+      <FootstepsPreviewCard />
+
       {/* Letters shortcut */}
-      <div className="mt-8">
+      <div className="mt-6">
         <Link
           to="/app/letters"
           className="inline-flex min-h-[38px] items-center gap-2 rounded-full border border-border/80 bg-surface px-4 py-2 text-xs font-medium text-muted transition hover:border-accent hover:text-accent shadow-2xs"

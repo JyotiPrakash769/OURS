@@ -351,6 +351,26 @@ export function AccountModal({ isOpen, onClose }: Props) {
                   Both partners have equal permission to edit or remove memories, stories, and future plans.
                 </p>
               </div>
+
+              <div className="rounded-xl border border-border bg-bg/50 p-3.5">
+                <h4 className="text-xs font-semibold text-text flex items-center gap-1.5">
+                  <span>🗺️</span> Our Footsteps Date Map
+                </h4>
+                <p className="mt-1 text-[11px] text-muted leading-relaxed">
+                  Interactive map plotting all special places in Bhubaneswar & Khordha (Jaydev Vatika, Khordha Park, Kala Bhoomi, Temples, etc.) with coordinates and memories.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-accent/30 bg-accent-soft/20 p-3.5">
+                <h4 className="text-xs font-semibold text-accent flex items-center gap-1.5">
+                  <span>📱</span> Install OURS as a Phone App (PWA)
+                </h4>
+                <div className="mt-1.5 space-y-1.5 text-[11px] text-muted leading-relaxed">
+                  <p><strong>On iPhone (Safari):</strong> Tap the Share button (📤) at the bottom, then choose <strong>Add to Home Screen (➕)</strong>.</p>
+                  <p><strong>On Android (Chrome):</strong> Tap the 3 dots (⋮) in the top-right, then choose <strong>Install App</strong> or <strong>Add to Home Screen</strong>.</p>
+                  <p className="text-accent font-medium mt-1">✨ Opens without browser bars, exactly like an app from the App Store!</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
