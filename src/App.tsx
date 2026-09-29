@@ -8,6 +8,7 @@ import { Story } from './pages/Story'
 import { MemoriesWall } from './pages/MemoriesWall'
 import { FuturePage } from './pages/FuturePage'
 import { LettersPage } from './pages/LettersPage'
+import { FootstepsPage } from './pages/FootstepsPage'
 
 export default function App() {
   return (
@@ -33,6 +34,8 @@ export default function App() {
       >
         <Route index element={<Home />} />
         <Route path="story" element={<Story />} />
+        <Route path="footsteps" element={<FootstepsPage />} />
+        <Route path="map" element={<Navigate to="/app/footsteps" replace />} />
         <Route path="memories" element={<MemoriesWall />} />
         <Route path="future" element={<FuturePage />} />
         <Route path="letters" element={<LettersPage />} />

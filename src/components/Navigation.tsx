@@ -9,6 +9,7 @@ import { AccountModal } from './AccountModal'
 const items = [
   { to: '/app', label: 'Home', end: true },
   { to: '/app/story', label: 'Story', end: false },
+  { to: '/app/footsteps', label: 'Footsteps', end: false },
   { to: '/app/memories', label: 'Memories', end: false },
   { to: '/app/future', label: 'Future', end: false },
 ] as const
@@ -83,7 +84,7 @@ export function BottomNavigation() {
               to={i.to}
               end={i.end}
               className={({ isActive }) =>
-                `flex min-h-14 items-center justify-center text-sm ${
+                `flex min-h-14 items-center justify-center text-xs sm:text-sm px-1 text-center ${
                   isActive ? 'font-medium text-accent' : 'text-muted'
                 }`
               }
