@@ -16,7 +16,7 @@ const desktopItems = [
   { to: '/app/letters', label: 'Letters', end: false },
 ] as const
 
-export function TopBar() {
+export function TopBar({ relationshipId }: { relationshipId?: string }) {
   const { signOut } = useAuth()
   return (
     <header className="flex items-center justify-between px-6 py-4">
@@ -44,7 +44,7 @@ export function TopBar() {
         >
           💌
         </NavLink>
-        <NotificationToggle />
+        {relationshipId && <NotificationToggle relationshipId={relationshipId} />}
         <ThemeToggle />
         <button type="button" onClick={signOut} className="min-h-11 px-2 text-sm text-muted hover:text-text">
           Log out

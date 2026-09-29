@@ -5,10 +5,8 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
 } from '../lib/notifications'
-import { useApp } from '../lib/appContext'
 
-export function NotificationToggle() {
-  const { relationship } = useApp()
+export function NotificationToggle({ relationshipId }: { relationshipId?: string }) {
   const [supported] = useState(() => isPushSupported())
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() =>
     getNotificationPermission(),
@@ -20,7 +18,7 @@ export function NotificationToggle() {
   const handleSubscribe = async () => {
     setLoading(true)
     setMessage(null)
-    const res = await subscribeToPush(relationship.id)
+    const res = await subscribeToPush(relationshipId)
     setPermission(getNotificationPermission())
     setLoading(false)
     if (res.success) {

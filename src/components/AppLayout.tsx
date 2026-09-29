@@ -41,7 +41,7 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-dvh flex-col pb-20 md:pb-0">
-      <TopBar />
+      <TopBar relationshipId={state.kind === 'ready' ? state.relationship?.id : undefined} />
       <main className="flex flex-1 flex-col">
         {state.kind === 'error' && (
           <p role="alert" className="m-auto px-6 text-center text-muted">
