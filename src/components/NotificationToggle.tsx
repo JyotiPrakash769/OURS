@@ -92,21 +92,31 @@ export function NotificationToggle({ relationshipId }: { relationshipId?: string
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-30 bg-black/20 backdrop-blur-[1px]"
+            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-full z-40 mt-2 w-72 rounded-2xl border border-border bg-surface p-4 shadow-xl">
+          <div className="fixed inset-x-4 top-16 z-40 mx-auto max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-w-none">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h4 className="font-serif font-medium text-text">Notifications</h4>
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${isEnabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted/10 text-muted'}`}
+              <div className="flex items-center gap-2">
+                <h4 className="font-serif font-medium text-text">Notifications</h4>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${isEnabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted/10 text-muted'}`}
+                >
+                  {isEnabled ? 'Active' : 'Off'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted transition hover:bg-bg hover:text-text"
               >
-                {isEnabled ? 'Active' : 'Off'}
-              </span>
+                ✕
+              </button>
             </div>
 
             <p className="py-3 text-xs leading-relaxed text-muted">
-              Get notified on lock screen when your partner seals a secret love letter, adds a memory, or checks off a dream.
+              Get notified on your lock screen when your partner seals a secret love letter, adds a memory, or checks off a dream.
             </p>
 
             {message && (
