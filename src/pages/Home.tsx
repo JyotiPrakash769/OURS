@@ -39,18 +39,74 @@ export function Home() {
     }
   }, [])
 
+  const todayKey = useMemo(() => {
+    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
+  }, [now])
+
+  const [dismissedDate, setDismissedDate] = useState<string | null>(() => {
+    return localStorage.getItem('ours_celebration_dismissed_date')
+  })
+
+  const [justJoined, setJustJoined] = useState(() => {
+    return sessionStorage.getItem('ours_partner_just_joined') === 'true'
+  })
+
   const celebration = useMemo(() => {
+    // If user explicitly chose a preview in Settings:
+    if (previewType && previewType !== 'none') {
+      return getCelebrationInfo(
+        now,
+        relationship.timezone,
+        { meName: me.display_name, partnerName: partner?.display_name },
+        previewType
+      )
+    }
+
+    // If partner has not joined yet, NO natural celebrations occur!
+    if (!partner) {
+      return null
+    }
+
+    // If dismissed for today, hide it!
+    if (dismissedDate === todayKey && !justJoined) {
+      return null
+    }
+
+    // If partner just joined through the link:
+    if (justJoined) {
+      return getCelebrationInfo(
+        now,
+        relationship.timezone,
+        { meName: me.display_name, partnerName: partner.display_name },
+        'partner_joined'
+      )
+    }
+
+    // Natural date celebration for the connected couple
     return getCelebrationInfo(
       now,
       relationship.timezone,
-      { meName: me.display_name, partnerName: partner?.display_name },
-      previewType === 'none' ? undefined : previewType
+      { meName: me.display_name, partnerName: partner.display_name }
     )
-  }, [now, relationship.timezone, me.display_name, partner?.display_name, previewType])
+  }, [now, relationship.timezone, me.display_name, partner, previewType, dismissedDate, todayKey, justJoined])
 
   const handleReplay = () => {
     setAnimationActive(false)
     setTimeout(() => setAnimationActive(true), 50)
+  }
+
+  const handleDismiss = () => {
+    if (previewType && previewType !== 'none') {
+      setPreviewType(undefined)
+      localStorage.removeItem('ours_celebration_preview')
+      window.dispatchEvent(new Event('ours_celebration_change'))
+    }
+    if (justJoined) {
+      sessionStorage.removeItem('ours_partner_just_joined')
+      setJustJoined(false)
+    }
+    localStorage.setItem('ours_celebration_dismissed_date', todayKey)
+    setDismissedDate(todayKey)
   }
 
   const [memories, setMemories] = useState<Memory[]>([])
@@ -83,6 +139,7 @@ export function Home() {
           <CelebrationBanner
             celebration={celebration}
             onReplay={handleReplay}
+            onDismiss={handleDismiss}
             isCustomPreview={Boolean(previewType && previewType !== 'none')}
             onResetPreview={() => {
               setPreviewType(undefined)

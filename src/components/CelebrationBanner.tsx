@@ -4,6 +4,7 @@ import type { CelebrationInfo } from '../lib/celebrations'
 type Props = {
   celebration: CelebrationInfo
   onReplay: () => void
+  onDismiss?: () => void
   isCustomPreview?: boolean
   onResetPreview?: () => void
 }
@@ -11,6 +12,7 @@ type Props = {
 export function CelebrationBanner({
   celebration,
   onReplay,
+  onDismiss,
   isCustomPreview,
   onResetPreview,
 }: Props) {
@@ -22,6 +24,19 @@ export function CelebrationBanner({
         boxShadow: `0 20px 40px -15px ${celebration.bgGlow}`,
       }}
     >
+      {/* Top right dismiss button */}
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          title="Dismiss celebration for today"
+          aria-label="Dismiss celebration"
+          className="absolute top-3.5 right-3.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-surface/70 text-xs text-muted hover:bg-surface hover:text-text transition backdrop-blur-xs shadow-2xs"
+        >
+          ✕
+        </button>
+      )}
+
       {/* Decorative background glow circle */}
       <div
         aria-hidden="true"

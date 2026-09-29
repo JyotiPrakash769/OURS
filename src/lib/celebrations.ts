@@ -2,6 +2,7 @@ import { wallInZone } from './dates/zone'
 
 export type CelebrationType =
   | 'none'
+  | 'partner_joined'
   | 'kiss_day'
   | 'monthly_anniversary'
   | 'half_year_jubilee'
@@ -50,6 +51,9 @@ export function getCelebrationInfo(
 
   if (forcedType && forcedType !== 'none') {
     type = forcedType
+  } else if (!couple.partnerName) {
+    // Partner has not joined yet — only celebrate once the partner joins through the share link!
+    return null
   } else if (day === 25) {
     type = 'kiss_day'
   } else if (day === 29) {
@@ -71,6 +75,24 @@ export function getCelebrationInfo(
     : couple.meName
 
   switch (type) {
+    case 'partner_joined': {
+      return {
+        type: 'partner_joined',
+        day,
+        months: elapsedMonths,
+        years: elapsedYears,
+        title: `Officially Connected! 🎉💖`,
+        headline: `Together on OURS · Welcome Home`,
+        wish: `Welcome, ${couple.partnerName || 'Love'}! We are officially connected! 👩‍❤️‍👨✨`,
+        details: `Your shared space, memories, love letters, and footsteps begin today. From this moment on, every step is taken together! ♡`,
+        badgeLabel: '💖 Partner Connected',
+        particleMode: 'confetti',
+        accentGradient: 'from-pink-500/25 via-rose-500/20 to-purple-500/25',
+        bgGlow: 'rgba(236, 72, 153, 0.2)',
+        borderColor: 'border-pink-500/40',
+      }
+    }
+
     case 'kiss_day': {
       const kissMonths = elapsedMonths || 1
       return {

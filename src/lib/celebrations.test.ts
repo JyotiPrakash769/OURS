@@ -61,6 +61,29 @@ describe('getCelebrationInfo', () => {
     expect(celebration).toBeNull()
   })
 
+  it('automatically removes the celebration the day after (e.g. 30th September)', () => {
+    // Tomorrow: 30th September 2026
+    const tomorrow = new Date('2026-09-30T12:00:00+05:30')
+    const celebration = getCelebrationInfo(tomorrow, timeZone, couple)
+    expect(celebration).toBeNull()
+  })
+
+  it('returns null if partner has not joined yet (even on an anniversary date like 29th September)', () => {
+    const today = new Date('2026-09-29T12:00:00+05:30')
+    const singleUser = { meName: 'Jyoti' }
+    const celebration = getCelebrationInfo(today, timeZone, singleUser)
+    expect(celebration).toBeNull()
+  })
+
+  it('generates partner_joined celebration when partner joins through the share link', () => {
+    const today = new Date('2026-09-29T12:00:00+05:30')
+    const celebration = getCelebrationInfo(today, timeZone, couple, 'partner_joined')
+    expect(celebration).not.toBeNull()
+    expect(celebration?.type).toBe('partner_joined')
+    expect(celebration?.title).toContain('Officially Connected')
+    expect(celebration?.particleMode).toBe('confetti')
+  })
+
   it('allows forced preview mode on any day', () => {
     const normalDay = new Date('2026-08-10T12:00:00+05:30')
     const preview = getCelebrationInfo(normalDay, timeZone, couple, 'annual_grand_gala')

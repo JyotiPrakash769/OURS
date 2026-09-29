@@ -13,6 +13,7 @@ export function Invite() {
     setError(null)
     try {
       await acceptInvite(token ?? '')
+      sessionStorage.setItem('ours_partner_just_joined', 'true')
       navigate('/app', { replace: true })
     } catch (e: unknown) {
       const raw =
