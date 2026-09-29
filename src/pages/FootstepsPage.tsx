@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FOOTSTEP_SPOTS, type FootstepSpot, type Region } from '../lib/footsteps'
 
 // Viewport bounds for different region modes
@@ -47,6 +47,7 @@ export function FootstepsPage() {
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
 
   const handleZoomIn = () => setZoom((z) => Math.min(3.5, +(z + 0.3).toFixed(1)))
   const handleZoomOut = () => setZoom((z) => Math.max(0.6, +(z - 0.3).toFixed(1)))
@@ -60,11 +61,19 @@ export function FootstepsPage() {
     handleResetZoom()
   }
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
-    const delta = e.deltaY < 0 ? 0.15 : -0.15
-    setZoom((z) => Math.max(0.6, Math.min(3.5, +(z + delta).toFixed(2))))
-  }
+  useEffect(() => {
+    const el = mapContainerRef.current
+    if (!el) return
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const delta = e.deltaY < 0 ? 0.15 : -0.15
+      setZoom((z) => Math.max(0.6, Math.min(3.5, +(z + delta).toFixed(2))))
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return
@@ -239,10 +248,10 @@ export function FootstepsPage() {
         </div>
 
         <div
-          className={`relative h-[340px] sm:h-[420px] w-full bg-gradient-to-b from-bg/60 to-surface overflow-hidden ${
+          ref={mapContainerRef}
+          className={`relative h-[340px] sm:h-[420px] w-full bg-gradient-to-b from-bg/60 to-surface overflow-hidden touch-none ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
-          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

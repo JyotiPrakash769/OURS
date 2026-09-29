@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { FOOTSTEP_SPOTS, type FootstepSpot } from '../lib/footsteps'
 
 type Props = {
@@ -29,8 +29,7 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-
-  if (!isOpen) return null
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
 
   const handleZoomIn = () => setZoom((z) => Math.min(3.5, +(z + 0.3).toFixed(1)))
   const handleZoomOut = () => setZoom((z) => Math.max(0.6, +(z - 0.3).toFixed(1)))
@@ -39,11 +38,22 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
     setPan({ x: 0, y: 0 })
   }
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
-    const delta = e.deltaY < 0 ? 0.15 : -0.15
-    setZoom((z) => Math.max(0.6, Math.min(3.5, +(z + delta).toFixed(2))))
-  }
+  useEffect(() => {
+    if (!isOpen) return
+    const el = mapContainerRef.current
+    if (!el) return
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const delta = e.deltaY < 0 ? 0.15 : -0.15
+      setZoom((z) => Math.max(0.6, Math.min(3.5, +(z + delta).toFixed(2))))
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [isOpen])
+
+  if (!isOpen) return null
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return
@@ -187,8 +197,8 @@ export function OurFootstepsModal({ isOpen, onClose }: Props) {
           </div>
 
           <div
-            className={`h-full w-full ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-            onWheel={handleWheel}
+            ref={mapContainerRef}
+            className={`h-full w-full touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
