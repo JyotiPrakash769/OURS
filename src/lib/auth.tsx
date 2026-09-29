@@ -10,6 +10,7 @@ type Auth = {
   signIn: (email: string, password: string) => Promise<string | null>
   signUp: (email: string, password: string, displayName: string) => Promise<SignUpResult>
   signOut: () => Promise<void>
+  deleteAccount: () => Promise<void>
 }
 
 const AuthContext = createContext<Auth | null>(null)
@@ -50,7 +51,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await db().auth.signOut()
   }
 
-  return <AuthContext.Provider value={{ status, userId, signIn, signUp, signOut }}>{children}</AuthContext.Provider>
+  const deleteAccount = async () => {
+    const { error } = await db().rpc('delete_user_account')
+    if (error) throw new Error(error.message)
+    await db().auth.signOut()
+    setUserId(null)
+    setStatus('out')
+  }
+
+  return <AuthContext.Provider value={{ status, userId, signIn, signUp, signOut, deleteAccount }}>{children}</AuthContext.Provider>
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

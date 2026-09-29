@@ -431,7 +431,23 @@ describe('letters authorization', () => {
       /unauthorized/,
     )
   })
+
+  it('allows a user to permanently delete their account', async () => {
+    // Dave deletes his account
+    await as(dave, 'select public.delete_user_account()')
+
+    // Profile and auth user should no longer exist
+    const prof = await asAdmin('select * from public.profiles where id = $1', [dave])
+    expect(prof.rows).toHaveLength(0)
+
+    const u = await asAdmin('select * from auth.users where id = $1', [dave])
+    expect(u.rows).toHaveLength(0)
+
+    // Unauthenticated call should fail
+    await expect(as(null, 'select public.delete_user_account()')).rejects.toThrow()
+  })
 })
+
 
 
 

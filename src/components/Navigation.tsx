@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationToggle } from './NotificationToggle'
+import { AccountModal } from './AccountModal'
 
 // Letters are reached from Home and desktop TopBar, not the mobile bottom nav (per spec).
 const items = [
@@ -18,39 +20,53 @@ const desktopItems = [
 
 export function TopBar({ relationshipId }: { relationshipId?: string }) {
   const { signOut } = useAuth()
+  const [accountOpen, setAccountOpen] = useState(false)
+
   return (
-    <header className="flex items-center justify-between px-6 py-4">
-      <NavLink to="/app" className="font-serif text-2xl">
-        OURS <span className="text-accent">♡</span>
-      </NavLink>
-      <nav aria-label="Desktop" className="hidden gap-8 text-sm md:flex">
-        {desktopItems.map((i) => (
-          <NavLink
-            key={i.to}
-            to={i.to}
-            end={i.end}
-            className={({ isActive }) => (isActive ? 'text-accent' : 'text-muted hover:text-text')}
-          >
-            {i.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="flex items-center gap-2 sm:gap-3">
-        <NavLink
-          to="/app/letters"
-          title="Letters"
-          aria-label="Letters"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition hover:bg-surface hover:text-text md:hidden"
-        >
-          💌
+    <>
+      <header className="flex items-center justify-between px-6 py-4">
+        <NavLink to="/app" className="font-serif text-2xl">
+          OURS <span className="text-accent">♡</span>
         </NavLink>
-        {relationshipId && <NotificationToggle relationshipId={relationshipId} />}
-        <ThemeToggle />
-        <button type="button" onClick={signOut} className="min-h-11 px-2 text-sm text-muted hover:text-text">
-          Log out
-        </button>
-      </div>
-    </header>
+        <nav aria-label="Desktop" className="hidden gap-8 text-sm md:flex">
+          {desktopItems.map((i) => (
+            <NavLink
+              key={i.to}
+              to={i.to}
+              end={i.end}
+              className={({ isActive }) => (isActive ? 'text-accent' : 'text-muted hover:text-text')}
+            >
+              {i.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <NavLink
+            to="/app/letters"
+            title="Letters"
+            aria-label="Letters"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition hover:bg-surface hover:text-text md:hidden"
+          >
+            💌
+          </NavLink>
+          {relationshipId && <NotificationToggle relationshipId={relationshipId} />}
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setAccountOpen(true)}
+            title="Account & Settings"
+            aria-label="Account settings"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition hover:bg-surface hover:text-text"
+          >
+            ⚙️
+          </button>
+          <button type="button" onClick={signOut} className="hidden min-h-11 px-2 text-sm text-muted hover:text-text sm:inline-block">
+            Log out
+          </button>
+        </div>
+      </header>
+      <AccountModal isOpen={accountOpen} onClose={() => setAccountOpen(false)} />
+    </>
   )
 }
 

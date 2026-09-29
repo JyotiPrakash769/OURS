@@ -130,6 +130,7 @@ npm install
    - `0005_future_items.sql`
    - `0006_letters.sql`
    - `0007_push_subscriptions.sql`
+   - `0008_delete_account.sql`
 4. Under **Authentication** -> **Providers** -> **Email**:
    - Turn **OFF** "Confirm email" (makes setup seamless for two people).
 5. Under **Storage**:
